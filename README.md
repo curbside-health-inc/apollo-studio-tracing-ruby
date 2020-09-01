@@ -46,6 +46,23 @@ Or install it yourself as:
    end
    ```
 
+### Updating the Apollo .proto definition
+
+Install [Google Protocol Buffers](https://github.com/protocolbuffers/protobuf) via Homebrew
+
+```
+$ brew install protobuf
+```
+
+Regenerate the Ruby protos with the included script:
+
+```
+$ bin/generate-proto.sh
+Removing old client
+Downloading latest Apollo Protobuf IDL
+Generating Ruby client stubs
+```
+
 ## Known Issues and Limitations
 
 - Only works with class-based schemas, the legacy `.define` API will not be supported
