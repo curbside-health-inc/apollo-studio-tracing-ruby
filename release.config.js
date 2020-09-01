@@ -16,10 +16,10 @@ module.exports = {
           'CHANGELOG.md',
           'gemfiles/*.lock',
           'Gemfile.lock',
-          'lib/apollo-federation/version.rb',
+          'lib/apollo-studio-tracing/version.rb',
         ],
       },
     ],
     '@semantic-release/github',
   ],
-};
+}

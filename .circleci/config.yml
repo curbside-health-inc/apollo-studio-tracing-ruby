@@ -23,10 +23,10 @@ commands:
           command: |
             bundle install --jobs=4 --retry=3 --path=vendor/bundle
       - save_cache:
-            name: Save Ruby Package Cache
-            key: v2-gem-cache-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
-            paths:
-              - ./vendor/bundle
+          name: Save Ruby Package Cache
+          key: v2-gem-cache-{{ arch }}-{{ .Branch }}-{{ checksum "Gemfile.lock" }}
+          paths:
+            - ./vendor/bundle
   appraisal-install:
     parameters:
       appraisal:
@@ -69,30 +69,14 @@ jobs:
       - run: bundle config list
       - run: bundle exec appraisal << parameters.appraisal >> bundle config list
       - run: bundle exec appraisal << parameters.appraisal >> rake
-  integration-tests:
-    parameters:
-      appraisal:
-        type: string
-    docker:
-      - image: circleci/ruby:2.6-node
-    environment:
-      BUNDLE_APP_CONFIG: .bundle
-    steps:
-      - checkout
-      - bundle-install
-      - appraisal-install:
-          appraisal: << parameters.appraisal >>
-      - gusto/yarn-install
-      - run: bundle exec appraisal << parameters.appraisal >> yarn test
-      - run: yarn lint
-  release:
-    docker:
-      - image: circleci/ruby:2.6-node
-    steps:
-      - checkout
-      - bundle-install
-      - gusto/yarn-install
-      - run: npx semantic-release
+  # release:
+  #   docker:
+  #     - image: circleci/ruby:2.6-node
+  #   steps:
+  #     - checkout
+  #     - bundle-install
+  #     - gusto/yarn-install
+  #     - run: npx semantic-release
 
 workflows:
   version: 2
@@ -102,16 +86,11 @@ workflows:
       - ruby-test:
           matrix:
             parameters:
-              appraisal: ["graphql-1.9", "graphql-1.10"]
-      - integration-tests:
-          matrix:
-            parameters:
-              appraisal: ["graphql-1.9", "graphql-1.10"]
-      - release:
-          filters:
-            branches:
-              only: master
-          requires:
-            - gusto/ruby-lint
-            - ruby-test
-            - integration-tests
+              appraisal: ['graphql-1.9', 'graphql-1.10']
+      # - release:
+      #     filters:
+      #       branches:
+      #         only: master
+      #     requires:
+      #       - gusto/ruby-lint
+      #       - ruby-test

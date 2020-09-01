@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'apollo-federation/tracing/node_map'
+require 'apollo-studio-tracing/tracing/node_map'
 
-RSpec.describe ApolloFederation::Tracing::NodeMap do
+RSpec.describe ApolloStudioTracing::Tracing::NodeMap do
   it 'creates parents for any deeply nested paths' do
     map = described_class.new
     map.add(['_entities', 0, 'reviews', 0, 'author', 'name'])
@@ -42,9 +42,9 @@ RSpec.describe ApolloFederation::Tracing::NodeMap do
     map.add_error(error)
 
     expect(map.node_for_path('_entities.4.reviews').error).to eq [
-      ApolloFederation::Tracing::Error.new(
+      ApolloStudioTracing::Tracing::Error.new(
         json: JSON.dump(error),
-        location: [ApolloFederation::Tracing::Location.new(line: 2, column: 4)],
+        location: [ApolloStudioTracing::Tracing::Location.new(line: 2, column: 4)],
         message: 'whoops',
       ),
     ]
@@ -61,9 +61,9 @@ RSpec.describe ApolloFederation::Tracing::NodeMap do
     map.add_error(error)
 
     expect(map.root.error).to eq [
-      ApolloFederation::Tracing::Error.new(
+      ApolloStudioTracing::Tracing::Error.new(
         json: JSON.dump(error),
-        location: [ApolloFederation::Tracing::Location.new(line: 2, column: 4)],
+        location: [ApolloStudioTracing::Tracing::Location.new(line: 2, column: 4)],
         message: 'whoops',
       ),
     ]

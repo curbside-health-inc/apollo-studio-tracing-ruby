@@ -2,7 +2,7 @@
 
 require_relative 'proto/apollo_pb'
 
-module ApolloFederation
+module ApolloStudioTracing
   module Tracing
     Trace = ::Mdg::Engine::Proto::Trace
     Node = ::Mdg::Engine::Proto::Trace::Node

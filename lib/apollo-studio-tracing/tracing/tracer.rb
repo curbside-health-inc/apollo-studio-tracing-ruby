@@ -31,7 +31,7 @@
 #
 # </execute_multiplex>
 
-module ApolloFederation
+module ApolloStudioTracing
   module Tracing
     module Tracer
       # store string constants to avoid creating new strings for each call to .trace
@@ -61,7 +61,7 @@ module ApolloFederation
         query = data.fetch(:query)
         return block.call unless query.context && query.context[:tracing_enabled]
 
-        query.context.namespace(ApolloFederation::Tracing::KEY).merge!(
+        query.context.namespace(ApolloStudioTracing::Tracing::KEY).merge!(
           start_time: Time.now.utc,
           start_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
           node_map: NodeMap.new,
@@ -78,7 +78,7 @@ module ApolloFederation
         query = data.fetch(:query)
         return result unless query.context && query.context[:tracing_enabled]
 
-        trace = query.context.namespace(ApolloFederation::Tracing::KEY)
+        trace = query.context.namespace(ApolloStudioTracing::Tracing::KEY)
 
         trace.merge!(
           end_time: Time.now.utc,
@@ -99,7 +99,7 @@ module ApolloFederation
       #
       # Nodes are added the NodeMap stored in the trace hash.
       #
-      # Errors are added to nodes in `ApolloFederation::Tracing.attach_trace_to_result`
+      # Errors are added to nodes in `ApolloStudioTracing::Tracing.attach_trace_to_result`
       # because we don't have the error `location` here.
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def self.execute_field(data, &block)
@@ -130,7 +130,7 @@ module ApolloFederation
           parent_type = data.fetch(:owner).graphql_name
         end
 
-        trace = context.namespace(ApolloFederation::Tracing::KEY)
+        trace = context.namespace(ApolloStudioTracing::Tracing::KEY)
         node = trace[:node_map].add(path)
 
         # original_field_name is set only for aliased fields
@@ -168,7 +168,7 @@ module ApolloFederation
           field = data.fetch(:field)
         end
 
-        trace = context.namespace(ApolloFederation::Tracing::KEY)
+        trace = context.namespace(ApolloStudioTracing::Tracing::KEY)
 
         # When a field is resolved with an array of lazy values, the interpreter fires an
         # `execute_field` for the resolution of the field and then a `execute_field_lazy` event for

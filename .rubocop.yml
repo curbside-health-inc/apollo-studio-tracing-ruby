@@ -6,6 +6,7 @@ AllCops:
   Exclude:
     - 'gemfiles/**/*'
     - 'vendor/**/*'
+    - 'node_modules/**/*'
 
 #
 # We prefer trailing commas so that the git diff is reduced when adding elements
@@ -49,11 +50,11 @@ Metrics/ParameterLists:
 Metrics/LineLength:
   Max: 100
   Exclude:
-    - lib/apollo-federation/tracing/proto/apollo_pb.rb
+    - lib/apollo-studio-tracing/tracing/proto/apollo_pb.rb
 
 Naming/FileName:
   Exclude:
-    - 'lib/apollo-federation.rb'
+    - 'lib/apollo-studio-tracing.rb'
     - 'graphql-1.9.gemfile'
 
 RSpec/ExampleLength:
@@ -62,7 +63,7 @@ RSpec/NestedGroups:
   Enabled: false
 RSpec/FilePath:
   CustomTransform:
-    ApolloFederation: apollo-federation
+    ApolloStudioTracing: apollo-studio-tracing
 
 # Disabled so we can support Ruby 2.2
 # Rubocop only supports >= 2.3

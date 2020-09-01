@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module ApolloFederation
+module ApolloStudioTracing
   module Tracing
     KEY = :ftv1
     DEBUG_KEY = "#{KEY}_debug".to_sym
     class NotInstalledError < StandardError
-      MESSAGE = 'Apollo Federation Tracing not installed. \
-Add `use ApolloFederation::Tracing` to your schema.'
+      MESSAGE = 'Apollo Studio Tracing not installed. \
+Add `use ApolloStudioTracing::Tracing` to your schema.'
 
       def message
         MESSAGE
@@ -16,11 +16,11 @@ Add `use ApolloFederation::Tracing` to your schema.'
     module_function
 
     def use(schema)
-      schema.tracer ApolloFederation::Tracing::Tracer
+      schema.tracer ApolloStudioTracing::Tracing::Tracer
     end
 
     def should_add_traces(headers)
-      headers && headers['apollo-federation-include-trace'] == KEY.to_s
+      headers && headers['apollo-studio-tracing-include-trace'] == KEY.to_s
     end
 
     def attach_trace_to_result(result)
@@ -35,7 +35,7 @@ Add `use ApolloFederation::Tracing` to your schema.'
         trace[:node_map].add_error(error)
       end
 
-      proto = ApolloFederation::Tracing::Trace.new(
+      proto = ApolloStudioTracing::Tracing::Trace.new(
         start_time: to_proto_timestamp(trace[:start_time]),
         end_time: to_proto_timestamp(trace[:end_time]),
         duration_ns: trace[:end_time_nanos] - trace[:start_time_nanos],

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'apollo-federation/tracing/proto'
+require 'apollo-studio-tracing/tracing/proto'
 
-module ApolloFederation
+module ApolloStudioTracing
   module Tracing
     # NodeMap stores a flat map of trace nodes by stringified paths
     # (i.e. "_entities.0.id") for fast lookup when we need to alter
@@ -18,7 +18,7 @@ module ApolloFederation
       attr_reader :nodes
       def initialize
         @nodes = {
-          ROOT_KEY => ApolloFederation::Tracing::Node.new,
+          ROOT_KEY => ApolloStudioTracing::Tracing::Node.new,
         }
       end
 
@@ -31,7 +31,7 @@ module ApolloFederation
       end
 
       def add(path)
-        node = ApolloFederation::Tracing::Node.new
+        node = ApolloStudioTracing::Tracing::Node.new
         node_key = path.join('.')
         key = path.last
 
@@ -57,10 +57,10 @@ module ApolloFederation
         node = nodes[path] || root
 
         locations = array_wrap(error['locations']).map do |location|
-          ApolloFederation::Tracing::Location.new(location)
+          ApolloStudioTracing::Tracing::Location.new(location)
         end
 
-        node.error << ApolloFederation::Tracing::Error.new(
+        node.error << ApolloStudioTracing::Tracing::Error.new(
           message: error['message'],
           location: locations,
           json: JSON.dump(error),

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'apollo-federation'
+require 'apollo-studio-tracing'
 
-RSpec.describe ApolloFederation::Tracing do
+RSpec.describe ApolloStudioTracing::Tracing do
   RSpec.shared_examples 'a basic tracer' do
     # configure clocks to increment by 1 for each call
     before do
@@ -58,7 +58,7 @@ RSpec.describe ApolloFederation::Tracing do
       result = schema.execute(query, context: { tracing_enabled: true })
       described_class.attach_trace_to_result(result)
 
-      ApolloFederation::Tracing::Trace.decode(Base64.decode64(result[:extensions][:ftv1]))
+      ApolloStudioTracing::Tracing::Trace.decode(Base64.decode64(result[:extensions][:ftv1]))
     end
 
     describe 'building the trace tree' do
@@ -113,7 +113,7 @@ RSpec.describe ApolloFederation::Tracing do
 
       it 'records timing for children' do
         query = '{ parent { id, child { id, grandchild { id } } } }'
-        expect(trace(query)).to eq(ApolloFederation::Tracing::Trace.new(
+        expect(trace(query)).to eq(ApolloStudioTracing::Tracing::Trace.new(
                                      start_time: { seconds: 1_564_920_001, nanos: 0 },
                                      end_time: { seconds: 1_564_920_002, nanos: 0 },
                                      duration_ns: 13,
@@ -163,7 +163,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works for scalar arrays' do
-        expect(trace('{ strings }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ strings }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: 3,
@@ -238,7 +238,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with lazy values' do
-        expect(trace('{ lazyScalar }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ lazyScalar }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: 4,
@@ -259,7 +259,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with an array of lazy scalars' do
-        expect(trace('{ arrayOfLazyScalars }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ arrayOfLazyScalars }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           # The old runtime and the interpreter handle arrays of lazy objects differently.
@@ -279,7 +279,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with a lazy array of scalars' do
-        expect(trace('{ lazyArrayOfScalars }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ lazyArrayOfScalars }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: 4,
@@ -296,7 +296,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with a lazy array of lazy scalars' do
-        expect(trace('{ lazyArrayOfLazyScalars }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ lazyArrayOfLazyScalars }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: schema.interpreter? ? 6 : 4,
@@ -313,7 +313,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with array of lazy objects' do
-        expect(trace('{ arrayOfLazyObjects { id } }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ arrayOfLazyObjects { id } }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: schema.interpreter? ? 9 : 7,
@@ -352,7 +352,7 @@ RSpec.describe ApolloFederation::Tracing do
       end
 
       it 'works with a lazy array of objects' do
-        expect(trace('{ lazyArrayOfObjects { id } }')).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace('{ lazyArrayOfObjects { id } }')).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: 8,
@@ -392,7 +392,7 @@ RSpec.describe ApolloFederation::Tracing do
 
       it 'works with multiple lazy fields' do
         query = '{ lazyScalar arrayOfLazyScalars lazyArrayOfScalars }'
-        expect(trace(query)).to eq ApolloFederation::Tracing::Trace.new(
+        expect(trace(query)).to eq ApolloStudioTracing::Tracing::Trace.new(
           start_time: { seconds: 1_564_920_001, nanos: 0 },
           end_time: { seconds: 1_564_920_002, nanos: 0 },
           duration_ns: schema.interpreter? ? 11 : 9,
@@ -453,7 +453,7 @@ RSpec.describe ApolloFederation::Tracing do
 
       it 'records index instead of response_name for objects in arrays' do
         expect(trace('{ items { id, name } }')).to eq(
-          ApolloFederation::Tracing::Trace.new(
+          ApolloStudioTracing::Tracing::Trace.new(
             start_time: { seconds: 1_564_920_001, nanos: 0 },
             end_time: { seconds: 1_564_920_002, nanos: 0 },
             duration_ns: 11,
@@ -517,7 +517,7 @@ RSpec.describe ApolloFederation::Tracing do
   context 'with the legacy runtime' do
     let(:base_schema) do
       Class.new(GraphQL::Schema) do
-        use ApolloFederation::Tracing
+        use ApolloStudioTracing::Tracing
       end
     end
 
@@ -527,7 +527,7 @@ RSpec.describe ApolloFederation::Tracing do
   context 'with the new interpreter' do
     let(:base_schema) do
       Class.new(GraphQL::Schema) do
-        use ApolloFederation::Tracing
+        use ApolloStudioTracing::Tracing
         use GraphQL::Execution::Interpreter
         use GraphQL::Analysis::AST
       end

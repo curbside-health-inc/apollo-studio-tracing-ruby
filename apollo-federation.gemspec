@@ -3,25 +3,25 @@
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
-require 'apollo-federation/version'
+require 'apollo-studio-tracing/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'apollo-federation'
-  spec.version       = ApolloFederation::VERSION
-  spec.authors       = ['Noa Elad', 'Rylan Collins']
-  spec.email         = ['noa.elad@gusto.com', 'rylan@gusto.com']
+  spec.name          = 'apollo-studio-tracing'
+  spec.version       = ApolloStudioTracing::VERSION
+  spec.authors       = ['Luke Saniwck']
+  spec.email         = ['luke@enjoy.com']
 
-  spec.summary       = 'A Ruby implementation of Apollo Federation'
+  spec.summary       = 'A Ruby implementation of Apollo Studio tracing'
   spec.description   = spec.summary
-  spec.homepage      = 'https://github.com/Gusto/apollo-federation-ruby'
+  spec.homepage      = 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 2.2.0' # bc of `.to_sym`
 
   spec.metadata    = {
-    'homepage_uri' => 'https://github.com/Gusto/apollo-federation-ruby',
-    'changelog_uri' => 'https://github.com/Gusto/apollo-federation-ruby/releases',
-    'source_code_uri' => 'https://github.com/Gusto/apollo-federation-ruby',
-    'bug_tracker_uri' => 'https://github.com/Gusto/apollo-federation-ruby/issues',
+    'homepage_uri' => 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby',
+    'changelog_uri' => 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby/releases',
+    'source_code_uri' => 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby',
+    'bug_tracker_uri' => 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby/issues',
   }
 
   spec.files = `git ls-files bin lib *.md LICENSE`.split("\n")
