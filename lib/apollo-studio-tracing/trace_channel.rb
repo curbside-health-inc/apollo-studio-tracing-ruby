@@ -126,12 +126,12 @@ module ApolloStudioTracing
     end
 
     def send_report(traces_per_query)
-      trace_report = ApolloStudioTracing::Proto::FullTracesReport.new(header: @report_header)
+      trace_report = ApolloStudioTracing::Report.new(header: @report_header)
       traces_per_query.each do |query_key, encoded_traces|
-        trace_report.traces_per_query[query_key] = ApolloStudioTracing::Proto::Traces.new(
+        trace_report.traces_per_query[query_key] = ApolloStudioTracing::TracesAndStats.new(
           # TODO: Figure out how to use the already encoded traces like Apollo
           # https://github.com/apollographql/apollo-server/blob/master/packages/apollo-engine-reporting-protobuf/src/index.js
-          trace: encoded_traces.map { |encoded_trace| ApolloStudioTracing::Proto::Trace.decode(encoded_trace) }
+          trace: encoded_traces.map { |encoded_trace| ApolloStudioTracing::Trace.decode(encoded_trace) }
         )
       end
 
@@ -140,7 +140,7 @@ module ApolloStudioTracing
       end
 
       ApolloStudioTracing::API.upload(
-        ApolloStudioTracing::Proto::FullTracesReport.encode(trace_report),
+        ApolloStudioTracing::Report.encode(trace_report),
         api_key: api_key,
         compress: compress,
         max_attempts: max_upload_attempts,

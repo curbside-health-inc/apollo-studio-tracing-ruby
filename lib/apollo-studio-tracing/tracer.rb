@@ -51,7 +51,7 @@ module ApolloStudioTracing
         query.query_string
       end
 
-      report_header = ApolloStudioTracing::Proto::ReportHeader.new(
+      report_header = ApolloStudioTracing::ReportHeader.new(
         hostname: hostname,
         uname: uname,
         agent_version: agent_version,
