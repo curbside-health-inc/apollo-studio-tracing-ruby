@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'graphql', '>= 1.9.8'
 
+  spec.add_runtime_dependency 'concurrent-ruby'
   spec.add_runtime_dependency 'google-protobuf', '~> 3.7'
 
   spec.add_development_dependency 'actionpack'

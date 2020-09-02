@@ -59,7 +59,6 @@ module ApolloStudioTracing
       # Create a trace hash on the query context and record start times.
       def self.execute_query(data, &block)
         query = data.fetch(:query)
-        return block.call unless query.context && query.context[:tracing_enabled]
 
         query.context.namespace(ApolloStudioTracing::Tracing::KEY).merge!(
           start_time: Time.now.utc,
@@ -75,8 +74,10 @@ module ApolloStudioTracing
       def self.execute_query_lazy(data, &block)
         result = block.call
 
+        # TODO (lsanwick) This does not currently support multiplexing, data is { query, multiplex }
+        # with only one filled out.
+
         query = data.fetch(:query)
-        return result unless query.context && query.context[:tracing_enabled]
 
         trace = query.context.namespace(ApolloStudioTracing::Tracing::KEY)
 
@@ -104,7 +105,6 @@ module ApolloStudioTracing
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def self.execute_field(data, &block)
         context = data.fetch(:context, nil) || data.fetch(:query).context
-        return block.call unless context && context[:tracing_enabled]
 
         start_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
 
@@ -149,7 +149,6 @@ module ApolloStudioTracing
       # Overwrite the end times on the trace node if the resolver was lazy.
       def self.execute_field_lazy(data, &block)
         context = data.fetch(:context, nil) || data.fetch(:query).context
-        return block.call unless context && context[:tracing_enabled]
 
         begin
           result = block.call
