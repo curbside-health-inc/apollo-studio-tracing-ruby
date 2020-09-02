@@ -127,6 +127,8 @@ module ApolloStudioTracing
         end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
       )
 
+      @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+
       result
     end
 
