@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-require 'apollo-studio-tracing/tracing/proto'
-require 'apollo-studio-tracing/tracing/node_map'
-require 'apollo-studio-tracing/tracing/tracer'
-require 'apollo-studio-tracing/tracing'
+require 'apollo-studio-tracing/proto'
+require 'apollo-studio-tracing/node_map'
+require 'apollo-studio-tracing/tracer'
 
 module ApolloStudioTracing
   extend self
+
+  KEY = :ftv1
+  DEBUG_KEY = "#{KEY}_debug".to_sym
 
   attr_accessor :logger
 

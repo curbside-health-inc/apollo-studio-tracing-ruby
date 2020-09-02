@@ -50,7 +50,7 @@ Metrics/ParameterLists:
 Metrics/LineLength:
   Max: 100
   Exclude:
-    - lib/apollo-studio-tracing/tracing/proto/apollo_pb.rb
+    - lib/apollo-studio-tracing/proto/apollo_pb.rb
 
 Naming/FileName:
   Exclude:
