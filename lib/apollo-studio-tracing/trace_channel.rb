@@ -147,5 +147,9 @@ module ApolloStudioTracing
         min_retry_delay_secs: min_upload_retry_delay_secs
       )
     end
+
+    def to_proto_timestamp(time)
+      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time.nsec)
+    end
   end
 end
