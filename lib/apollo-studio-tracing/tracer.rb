@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'apollo-studio-tracing/version'
+require 'apollo-studio-tracing/trace_channel'
 
 # Trace events are nested and fire in this order
 # for a simple single-field query like `{ foo }`:

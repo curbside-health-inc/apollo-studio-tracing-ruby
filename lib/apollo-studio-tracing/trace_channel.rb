@@ -49,9 +49,10 @@ module ApolloStudioTracing
           # start_time
           raise NotInstalledError unless trace[:start_time]
 
-          result['errors']&.each do |error|
-            trace[:node_map].add_error(error)
-          end
+          # TODO (lsanwick) Add errors?
+          # result['errors']&.each do |error|
+          #   trace[:node_map].add_error(error)
+          # end
 
           proto = ApolloStudioTracing::Trace.new(
             start_time: to_proto_timestamp(trace[:start_time]),
