@@ -230,5 +230,24 @@ module ApolloStudioTracing
       result
     end
     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+
+    private
+
+    def hostname
+      @hostname ||= Socket.gethostname
+    end
+
+    def agent_version
+      @agent_version ||= "apollo-studio-tracing #{ApolloTracing::VERSION}"
+    end
+
+    def uname
+      @uname ||= `uname -a`
+    end
+
+    def to_proto_timestamp(time)
+      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time.nsec)
+    end
   end
 end
