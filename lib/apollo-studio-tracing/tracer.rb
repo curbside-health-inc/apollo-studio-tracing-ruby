@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'version'
+
 # Trace events are nested and fire in this order
 # for a simple single-field query like `{ foo }`:
 #
