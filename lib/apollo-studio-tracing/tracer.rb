@@ -32,7 +32,7 @@
 # </execute_multiplex>
 
 module ApolloStudioTracing
-  module Tracer
+  class Tracer
     # store string constants to avoid creating new strings for each call to .trace
     EXECUTE_QUERY = 'execute_query'
     EXECUTE_QUERY_LAZY = 'execute_query_lazy'
@@ -81,7 +81,7 @@ module ApolloStudioTracing
     end
 
 
-    def self.trace(key, data, &block)
+    def trace(key, data, &block)
       case key
       when EXECUTE_QUERY
         execute_query(data, &block)
@@ -98,7 +98,7 @@ module ApolloStudioTracing
 
     # Step 1:
     # Create a trace hash on the query context and record start times.
-    def self.execute_query(data, &block)
+    def execute_query(data, &block)
       query = data.fetch(:query)
 
       query.context.namespace(ApolloStudioTracing::KEY).merge!(
@@ -112,7 +112,7 @@ module ApolloStudioTracing
 
     # Step 4:
     # Record end times and merge them into the trace hash.
-    def self.execute_query_lazy(data, &block)
+    def execute_query_lazy(data, &block)
       result = block.call
 
       # TODO (lsanwick) This does not currently support multiplexing, data is { query, multiplex }
@@ -146,7 +146,7 @@ module ApolloStudioTracing
     # Errors are added to nodes in `ApolloStudioTracing::Tracing.attach_trace_to_result`
     # because we don't have the error `location` here.
     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def self.execute_field(data, &block)
+    def execute_field(data, &block)
       context = data.fetch(:context, nil) || data.fetch(:query).context
 
       start_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
@@ -190,7 +190,7 @@ module ApolloStudioTracing
 
     # Optional Step 3:
     # Overwrite the end times on the trace node if the resolver was lazy.
-    def self.execute_field_lazy(data, &block)
+    def execute_field_lazy(data, &block)
       context = data.fetch(:context, nil) || data.fetch(:query).context
 
       begin
