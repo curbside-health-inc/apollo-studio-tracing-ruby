@@ -39,6 +39,48 @@ module ApolloStudioTracing
     EXECUTE_FIELD = 'execute_field'
     EXECUTE_FIELD_LAZY = 'execute_field_lazy'
 
+    attr_reader :trace_prepare, :query_signature
+
+    def initialize(schema_tag: nil, schema_hash: nil, service_version: nil, trace_prepare: nil, query_signature: nil,
+                   api_key: nil, **trace_channel_options)
+      @trace_prepare = trace_prepare || Proc.new {}
+      @query_signature = query_signature || Proc.new do |query|
+        # TODO: This should be smarter
+        # TODO (lsanwick) Replace with reference implementation from
+        # https://github.com/apollographql/apollo-tooling/blob/master/packages/apollo-graphql/src/operationId.ts
+        query.query_string
+      end
+
+      report_header = ApolloStudioTracing::Proto::ReportHeader.new(
+        hostname: hostname,
+        uname: uname,
+        agent_version: agent_version,
+        service: api_key ? api_key.split(':')[1] : '',
+        service_version: service_version,
+        schema_tag: schema_tag || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
+        schema_hash: schema_hash,
+        runtime_version: RUBY_DESCRIPTION
+      )
+      @trace_channel = ApolloStudioTracing::TraceChannel.new(
+        report_header: report_header,
+        api_key: api_key,
+        **trace_channel_options
+      )
+    end
+
+    def start_trace_channel
+      @trace_channel.start
+    end
+
+    def shutdown_trace_channel
+      @trace_channel.shutdown
+    end
+
+    def flush_trace_channel
+      @trace_channel.flush
+    end
+
+
     def self.trace(key, data, &block)
       case key
       when EXECUTE_QUERY
