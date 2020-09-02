@@ -57,7 +57,7 @@ module ApolloStudioTracing
         hostname: hostname,
         agent_version: agent_version,
         service_version: service_version,
-        runtime_version: RUBY_DESCRIPTION
+        runtime_version: RUBY_DESCRIPTION,
         uname: uname,
         schema_tag: schema_tag || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
         executable_schema_id: executable_schema_id,
