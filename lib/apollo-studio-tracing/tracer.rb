@@ -43,7 +43,7 @@ module ApolloStudioTracing
 
     attr_reader :trace_prepare, :query_signature
 
-    def initialize(schema_tag: nil, schema_hash: nil, service_version: nil, trace_prepare: nil, query_signature: nil,
+    def initialize(schema_tag: nil, executable_schema_id: nil, service_version: nil, trace_prepare: nil, query_signature: nil,
                    api_key: nil, **trace_channel_options)
       @trace_prepare = trace_prepare || Proc.new {}
       @query_signature = query_signature || Proc.new do |query|
@@ -55,13 +55,12 @@ module ApolloStudioTracing
 
       report_header = ApolloStudioTracing::ReportHeader.new(
         hostname: hostname,
-        uname: uname,
         agent_version: agent_version,
-        service: api_key ? api_key.split(':')[1] : '',
         service_version: service_version,
-        schema_tag: schema_tag || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
-        schema_hash: schema_hash,
         runtime_version: RUBY_DESCRIPTION
+        uname: uname,
+        schema_tag: schema_tag || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
+        executable_schema_id: executable_schema_id,
       )
       @trace_channel = ApolloStudioTracing::TraceChannel.new(
         report_header: report_header,
