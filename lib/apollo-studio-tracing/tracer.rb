@@ -239,7 +239,7 @@ module ApolloStudioTracing
     end
 
     def agent_version
-      @agent_version ||= "apollo-studio-tracing #{ApolloTracing::VERSION}"
+      @agent_version ||= "apollo-studio-tracing #{ApolloStudioTracing::VERSION}"
     end
 
     def uname
