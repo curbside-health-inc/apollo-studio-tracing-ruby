@@ -5,11 +5,20 @@ require_relative 'proto'
 require_relative 'shutdown_barrier'
 
 module ApolloStudioTracing
+  # rubocop:disable Metrics/ClassLength
   class TraceChannel
-    attr_reader :compress, :api_key, :reporting_interval, :max_uncompressed_report_size, :debug_reports,
-                :max_upload_attempts, :min_upload_retry_delay_secs, :max_queue_bytes
-    alias_method :debug_reports?, :debug_reports
+    attr_reader :compress,
+                :api_key,
+                :reporting_interval,
+                :max_uncompressed_report_size,
+                :debug_reports,
+                :max_upload_attempts,
+                :min_upload_retry_delay_secs,
+                :max_queue_bytes
 
+    alias debug_reports? debug_reports
+
+    # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def initialize(report_header:, compress: nil, api_key: nil, reporting_interval: nil,
                    max_uncompressed_report_size: nil, max_queue_bytes: nil, debug_reports: nil,
                    max_upload_attempts: nil, min_upload_retry_delay_secs: nil)
@@ -28,19 +37,24 @@ module ApolloStudioTracing
       @enqueue_mutex = Mutex.new
       @shutdown_barrier = ApolloStudioTracing::ShutdownBarrier.new
     end
+    # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
     def queue(query_key, trace)
       @enqueue_mutex.synchronize do
         if @queue_bytes.value >= max_queue_bytes
           unless @queue_full
-            ApolloStudioTracing.logger.warn("Apollo tracing queue is above the threshold of #{max_queue_bytes} bytes and " \
-              'trace collection will be paused.')
+            ApolloStudioTracing.logger.warn(
+              "Apollo tracing queue is above the threshold of #{max_queue_bytes} bytes and " \
+              'trace collection will be paused.',
+            )
             @queue_full = true
           end
         else
           if @queue_full
-            ApolloStudioTracing.logger.info("Apollo tracing queue is below the threshold of #{max_queue_bytes} bytes and " \
-              'trace collection will resume.')
+            ApolloStudioTracing.logger.info(
+              "Apollo tracing queue is below the threshold of #{max_queue_bytes} bytes and " \
+              'trace collection will resume.',
+            )
             @queue_full = false
           end
 
@@ -48,7 +62,7 @@ module ApolloStudioTracing
           # start_time
           raise NotInstalledError unless trace[:start_time]
 
-          # TODO (lsanwick) Add errors?
+          # TODO: (lsanwick) Add errors?
           # result['errors']&.each do |error|
           #   trace[:node_map].add_error(error)
           # end
@@ -76,7 +90,7 @@ module ApolloStudioTracing
     def flush
       until @queue.empty?
         # If the uploader thread isn't running then the queue will never drain
-        break unless @uploader_thread && @uploader_thread.alive?
+        break unless @uploader_thread&.alive?
 
         sleep(0.1)
       end
@@ -115,11 +129,11 @@ module ApolloStudioTracing
         traces_per_query[query_key] << encoded_trace
         report_size += encoded_trace.bytesize + query_key.bytesize
 
-        if report_size >= max_uncompressed_report_size # rubocop:disable Style/Next
-          send_report(traces_per_query)
-          traces_per_query = {}
-          report_size = 0
-        end
+        next unless report_size >= max_uncompressed_report_size
+
+        send_report(traces_per_query)
+        traces_per_query = {}
+        report_size = 0
       end
 
       send_report(traces_per_query) unless traces_per_query.empty?
@@ -131,12 +145,16 @@ module ApolloStudioTracing
         trace_report.traces_per_query[query_key] = ApolloStudioTracing::TracesAndStats.new(
           # TODO: Figure out how to use the already encoded traces like Apollo
           # https://github.com/apollographql/apollo-server/blob/master/packages/apollo-engine-reporting-protobuf/src/index.js
-          trace: encoded_traces.map { |encoded_trace| ApolloStudioTracing::Trace.decode(encoded_trace) }
+          trace: encoded_traces.map do |encoded_trace|
+            ApolloStudioTracing::Trace.decode(encoded_trace)
+          end,
         )
       end
 
       if debug_reports?
-        ApolloStudioTracing.logger.info("Sending trace report:\n#{JSON.pretty_generate(JSON.parse(trace_report.to_json))}")
+        ApolloStudioTracing.logger.info(
+          "Sending trace report:\n#{JSON.pretty_generate(JSON.parse(trace_report.to_json))}",
+        )
       end
 
       ApolloStudioTracing::API.upload(
@@ -144,7 +162,7 @@ module ApolloStudioTracing
         api_key: api_key,
         compress: compress,
         max_attempts: max_upload_attempts,
-        min_retry_delay_secs: min_upload_retry_delay_secs
+        min_retry_delay_secs: min_upload_retry_delay_secs,
       )
     end
 
@@ -152,4 +170,5 @@ module ApolloStudioTracing
       Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time.nsec)
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

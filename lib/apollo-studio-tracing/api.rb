@@ -21,8 +21,10 @@ module ApolloStudioTracing
       attempt += 1
       if e.is_a?(RetryableUploadAttemptError) && attempt < max_attempts
         retry_delay = min_retry_delay_secs * 2**attempt
-        ApolloStudioTracing.logger.warn("Attempt to send Apollo trace report failed and will be retried in #{retry_delay} " \
-          "secs: #{e.message}")
+        ApolloStudioTracing.logger.warn(
+          "Attempt to send Apollo trace report failed and will be retried in #{retry_delay} " \
+          "secs: #{e.message}",
+        )
         sleep(retry_delay)
         retry
       else
@@ -39,12 +41,14 @@ module ApolloStudioTracing
       result = Net::HTTP.post(APOLLO_URI, body, headers)
 
       if result.is_a?(Net::HTTPServerError)
-        raise RetryableUploadAttemptError.new("#{result.code} #{result.message} - #{result.body}")
-      elsif !result.is_a?(Net::HTTPSuccess)
-        raise UploadAttemptError.new("#{result.message} (#{result.code}) - #{result.body}")
+        raise RetryableUploadAttemptError, "#{result.code} #{result.message} - #{result.body}"
+      end
+
+      if !result.is_a?(Net::HTTPSuccess)
+        raise UploadAttemptError, "#{result.message} (#{result.code}) - #{result.body}"
       end
     rescue IOError, SocketError, SystemCallError, OpenSSL::OpenSSLError => e
-      raise RetryableUploadAttemptError.new("#{e.class} - #{e.message}")
+      raise RetryableUploadAttemptError, "#{e.class} - #{e.message}"
     end
 
     def gzip(data)

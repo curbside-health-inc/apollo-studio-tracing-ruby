@@ -19,8 +19,6 @@ Add `use ApolloStudioTracing::Tracing` to your schema.'
     end
   end
 
-
-
   attr_accessor :logger
 
   # TODO: Initialize this to Rails.logger in a Railtie

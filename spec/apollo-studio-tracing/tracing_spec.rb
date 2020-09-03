@@ -1,5 +1,6 @@
-# TODO (lsanwick) Rewrite these tests with the new tracing reporter behavior
-# # frozen_string_literal: true
+# frozen_string_literal: true
+
+# TODO: (lsanwick) Rewrite these tests with the new tracing reporter behavior
 
 # require 'spec_helper'
 # require 'apollo-studio-tracing'

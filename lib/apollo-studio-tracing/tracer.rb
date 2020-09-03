@@ -35,6 +35,7 @@ require 'apollo-studio-tracing/trace_channel'
 # </execute_multiplex>
 
 module ApolloStudioTracing
+  # rubocop:disable Metrics/ClassLength
   class Tracer
     # store string constants to avoid creating new strings for each call to .trace
     EXECUTE_QUERY = 'execute_query'
@@ -44,10 +45,17 @@ module ApolloStudioTracing
 
     attr_reader :trace_prepare, :query_signature
 
-    def initialize(schema_tag: nil, executable_schema_id: nil, service_version: nil, trace_prepare: nil, query_signature: nil,
-                   api_key: nil, **trace_channel_options)
-      @trace_prepare = trace_prepare || Proc.new {}
-      @query_signature = query_signature || Proc.new do |query|
+    def initialize(
+      schema_tag: nil,
+      executable_schema_id: nil,
+      service_version: nil,
+      trace_prepare: nil,
+      query_signature: nil,
+      api_key: nil,
+      **trace_channel_options
+    )
+      @trace_prepare = trace_prepare || proc {}
+      @query_signature = query_signature || proc do |query|
         # TODO: This should be smarter
         # TODO (lsanwick) Replace with reference implementation from
         # https://github.com/apollographql/apollo-tooling/blob/master/packages/apollo-graphql/src/operationId.ts
@@ -66,7 +74,7 @@ module ApolloStudioTracing
       @trace_channel = ApolloStudioTracing::TraceChannel.new(
         report_header: report_header,
         api_key: api_key,
-        **trace_channel_options
+        **trace_channel_options,
       )
     end
 
@@ -81,7 +89,6 @@ module ApolloStudioTracing
     def flush_trace_channel
       @trace_channel.flush
     end
-
 
     def trace(key, data, &block)
       case key
@@ -127,7 +134,10 @@ module ApolloStudioTracing
             end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
           )
 
-          @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+          @trace_channel.queue(
+            "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
+            trace,
+          )
         end
       else
         query = data.fetch(:query)
@@ -139,9 +149,11 @@ module ApolloStudioTracing
           end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
         )
 
-        @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+        @trace_channel.queue(
+          "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
+          trace,
+        )
       end
-
 
       result
     end
@@ -245,7 +257,6 @@ module ApolloStudioTracing
     end
     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-
     private
 
     def hostname
@@ -260,4 +271,5 @@ module ApolloStudioTracing
       @uname ||= `uname -a`
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
