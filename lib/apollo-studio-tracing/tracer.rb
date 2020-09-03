@@ -117,19 +117,31 @@ module ApolloStudioTracing
     def execute_query_lazy(data, &block)
       result = block.call
 
-      # TODO (lsanwick) This does not currently support multiplexing, data is { query, multiplex }
-      # with only one filled out.
+      multiplex = data.fetch(:multiplex)
+      if multiplex
+        multiplex.queries.map do |query|
+          trace = query.context.namespace(ApolloStudioTracing::KEY)
 
-      query = data.fetch(:query)
+          trace.merge!(
+            end_time: Time.now.utc,
+            end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
+          )
 
-      trace = query.context.namespace(ApolloStudioTracing::KEY)
+          @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+        end
+      else
+        query = data.fetch(:query)
 
-      trace.merge!(
-        end_time: Time.now.utc,
-        end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
-      )
+        trace = query.context.namespace(ApolloStudioTracing::KEY)
 
-      @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+        trace.merge!(
+          end_time: Time.now.utc,
+          end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
+        )
+
+        @trace_channel.queue("# #{query.operation_name || '-'}\n#{query_signature.call(query)}", trace)
+      end
+
 
       result
     end
