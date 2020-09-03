@@ -7,7 +7,7 @@ require 'apollo-studio-tracing/tracer'
 module ApolloStudioTracing
   extend self
 
-  KEY = :ftv1
+  KEY = :apollo_trace
   DEBUG_KEY = "#{KEY}_debug".to_sym
 
   class NotInstalledError < StandardError
