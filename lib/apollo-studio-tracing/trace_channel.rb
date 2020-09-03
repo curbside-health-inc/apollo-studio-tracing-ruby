@@ -21,8 +21,7 @@ module ApolloStudioTracing
       @max_queue_bytes = max_queue_bytes || @max_uncompressed_report_size * 10
       @max_upload_attempts = max_upload_attempts || 5
       @min_upload_retry_delay_secs = min_upload_retry_delay_secs || 0.1
-      # @debug_reports = debug_reports.nil? ? false : debug_reports
-      @debug_reports = true
+      @debug_reports = debug_reports.nil? ? false : debug_reports
       @queue = Queue.new
       @queue_bytes = Concurrent::AtomicFixnum.new(0)
       @queue_full = false
