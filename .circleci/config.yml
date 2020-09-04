@@ -35,7 +35,7 @@ jobs:
       appraisal:
         type: string
     docker:
-      - image: circleci/ruby:2.6-node
+      - image: cimg/ruby:2.6-node
     environment:
       BUNDLE_APP_CONFIG: .bundle
     steps:
@@ -46,6 +46,15 @@ jobs:
       - run: bundle config list
       - run: bundle exec appraisal << parameters.appraisal >> bundle config list
       - run: bundle exec appraisal << parameters.appraisal >> rake
+  lint:
+    docker:
+      - image: 'cimg/ruby:2.6-node'
+    steps:
+      - checkout
+      - ruby/install-deps
+      - ruby/rubocop-check:
+          format: progress
+          label: Inspecting with Rubocop
   # release:
   #   docker:
   #     - image: circleci/ruby:2.6-node
@@ -59,7 +68,7 @@ workflows:
   version: 2
   main:
     jobs:
-      - ruby/rubocop-check
+      - lint
       - ruby-test:
           matrix:
             parameters:
