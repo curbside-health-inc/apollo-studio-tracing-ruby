@@ -24,7 +24,9 @@ Add `use ApolloStudioTracing::Tracing` to your schema.'
   # TODO: Initialize this to Rails.logger in a Railtie
   self.logger = Logger.new(STDOUT)
 
-  def use(schema, **options)
+  def use(schema, enabled: true, **options)
+    return unless enabled
+
     tracer = ApolloStudioTracing::Tracer.new(**options)
     # TODO: Shutdown tracers when reloading code in Rails
     # (although it's unlikely you'll have Apollo Tracing enabled in development)
