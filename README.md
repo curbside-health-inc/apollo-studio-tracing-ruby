@@ -18,31 +18,30 @@ gem 'apollo-studio-tracing'
 
 And then execute:
 
-    $ bundle
+```
+$ bundle install
+```
 
 Or install it yourself as:
 
-    $ gem install apollo-studio-tracing
+```
+$ gem install apollo-studio-tracing
+```
 
 ## Getting Started
 
-1. Add `use ApolloStudioTracing::Tracing` to your schema class.
-2. Change your controller to add `tracing_enabled: true` to the execution context based on the presence of the "include trace" header:
+1. Add `use ApolloStudioTracing` to your schema class.
+2. Change your controller to add `apollo_tracing_enabled: true` to the execution context. Ensure that `apollo_client_name` and `apollo_client_version` are set as well, for proper client information in Studio:
+
    ```ruby
    def execute
      # ...
      context = {
-       tracing_enabled: ApolloStudioTracing::Tracing.should_add_traces(headers)
+       apollo_client_name: request.headers["apollographql-client-name"],
+       apollo_client_version: request.headers["apollographql-client-version"],
+       apollo_tracing_enabled: Rails.env.production?,
      }
      # ...
-   end
-   ```
-3. Change your controller to attach the traces to the response:
-   ```ruby
-   def execute
-     # ...
-     result = YourSchema.execute(query, ...)
-     render json: ApolloStudioTracing::Tracing.attach_trace_to_result(result)
    end
    ```
 
