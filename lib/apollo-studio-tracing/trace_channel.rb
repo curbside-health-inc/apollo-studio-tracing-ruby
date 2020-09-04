@@ -62,16 +62,13 @@ module ApolloStudioTracing
           # start_time
           raise NotInstalledError unless trace[:start_time]
 
-          # TODO: (lsanwick) Add errors?
-          # result['errors']&.each do |error|
-          #   trace[:node_map].add_error(error)
-          # end
-
           proto = ApolloStudioTracing::Trace.new(
             start_time: to_proto_timestamp(trace[:start_time]),
             end_time: to_proto_timestamp(trace[:end_time]),
             duration_ns: trace[:end_time_nanos] - trace[:start_time_nanos],
             root: trace[:node_map].root,
+            client_name: trace[:client_name],
+            client_version: trace[:client_version],
           )
 
           encoded_trace = ApolloStudioTracing::Trace.encode(proto)
