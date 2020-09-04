@@ -249,6 +249,7 @@ module ApolloStudioTracing
         @trace_channel.queue(
           "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
           trace,
+          query.context,
         )
       end
 

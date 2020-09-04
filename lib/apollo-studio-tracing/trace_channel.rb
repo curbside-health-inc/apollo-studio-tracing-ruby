@@ -39,7 +39,7 @@ module ApolloStudioTracing
     end
     # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
-    def queue(query_key, trace)
+    def queue(query_key, trace, context)
       @enqueue_mutex.synchronize do
         if @queue_bytes.value >= max_queue_bytes
           unless @queue_full
@@ -67,8 +67,8 @@ module ApolloStudioTracing
             end_time: to_proto_timestamp(trace[:end_time]),
             duration_ns: trace[:end_time_nanos] - trace[:start_time_nanos],
             root: trace[:node_map].root,
-            client_name: trace[:client_name],
-            client_version: trace[:client_version],
+            client_name: context[:client_name],
+            client_version: context[:client_version],
           )
 
           encoded_trace = ApolloStudioTracing::Trace.encode(proto)
