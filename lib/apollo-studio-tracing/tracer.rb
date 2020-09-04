@@ -119,45 +119,6 @@ module ApolloStudioTracing
       block.call
     end
 
-    # Step 4:
-    # Record end times and merge them into the trace hash.
-    def execute_query_lazy(data, &block)
-      result = block.call
-
-      multiplex = data.fetch(:multiplex)
-      if multiplex
-        multiplex.queries.map do |query|
-          trace = query.context.namespace(ApolloStudioTracing::KEY)
-
-          trace.merge!(
-            end_time: Time.now.utc,
-            end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
-          )
-
-          @trace_channel.queue(
-            "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
-            trace,
-          )
-        end
-      else
-        query = data.fetch(:query)
-
-        trace = query.context.namespace(ApolloStudioTracing::KEY)
-
-        trace.merge!(
-          end_time: Time.now.utc,
-          end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
-        )
-
-        @trace_channel.queue(
-          "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
-          trace,
-        )
-      end
-
-      result
-    end
-
     # Step 2:
     # * Record start and end times for the field resolver.
     # * Rescue errors so the method doesn't exit early.
@@ -256,6 +217,34 @@ module ApolloStudioTracing
       result
     end
     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+    # Step 4:
+    # Record end times and merge them into the trace hash. Enqueue the final trace onto the
+    # TraceChannel.
+    def execute_query_lazy(data, &block)
+      result = block.call
+
+      queries = Array(data.fetch(:multiplex)&.queries || data.fetch(:query))
+      queries.map do |query|
+        trace = query.context.namespace(ApolloStudioTracing::KEY)
+
+        trace.merge!(
+          end_time: Time.now.utc,
+          end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
+        )
+
+        # Give consumers a chance to fill out additional details in the trace
+        # like Trace::HTTP and client*
+        trace_prepare.call(trace, query)
+
+        @trace_channel.queue(
+          "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
+          trace,
+        )
+      end
+
+      result
+    end
 
     private
 
