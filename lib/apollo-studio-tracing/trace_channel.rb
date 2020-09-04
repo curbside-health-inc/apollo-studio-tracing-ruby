@@ -67,8 +67,8 @@ module ApolloStudioTracing
             end_time: to_proto_timestamp(trace[:end_time]),
             duration_ns: trace[:end_time_nanos] - trace[:start_time_nanos],
             root: trace[:node_map].root,
-            client_name: context[:client_name],
-            client_version: context[:client_version],
+            client_name: context[:apollo_client_name],
+            client_version: context[:apollo_client_version],
           )
 
           encoded_trace = ApolloStudioTracing::Trace.encode(proto)
