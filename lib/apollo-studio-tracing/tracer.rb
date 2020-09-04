@@ -105,10 +105,15 @@ module ApolloStudioTracing
       end
     end
 
+    def tracing_enabled?(context)
+      context && context[:apollo_tracing_enabled]
+    end
+
     # Step 1:
     # Create a trace hash on the query context and record start times.
     def execute_query(data, &block)
       query = data.fetch(:query)
+      return block.call unless tracing_enabled?(query.context)
 
       query.context.namespace(ApolloStudioTracing::KEY).merge!(
         start_time: Time.now.utc,
@@ -135,6 +140,7 @@ module ApolloStudioTracing
     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def execute_field(data, &block)
       context = data.fetch(:context, nil) || data.fetch(:query).context
+      return block.call unless tracing_enabled?(context)
 
       start_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
 
@@ -179,6 +185,7 @@ module ApolloStudioTracing
     # Overwrite the end times on the trace node if the resolver was lazy.
     def execute_field_lazy(data, &block)
       context = data.fetch(:context, nil) || data.fetch(:query).context
+      return block.call unless tracing_enabled?(query.context)
 
       begin
         result = block.call
@@ -226,6 +233,8 @@ module ApolloStudioTracing
 
       queries = Array(data.fetch(:multiplex)&.queries || data.fetch(:query))
       queries.map do |query|
+        next unless tracing_enabled?(query.context)
+
         trace = query.context.namespace(ApolloStudioTracing::KEY)
 
         trace.merge!(
