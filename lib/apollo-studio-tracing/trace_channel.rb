@@ -24,7 +24,7 @@ module ApolloStudioTracing
                    max_upload_attempts: nil, min_upload_retry_delay_secs: nil)
       @report_header = report_header
       @compress = compress.nil? ? true : compress
-      @api_key = api_key || ENV.fetch('ENGINE_API_KEY') || ENV.fetch('APOLLO_KEY')
+      @api_key = api_key || ENV.fetch('ENGINE_API_KEY', ENV.fetch('APOLLO_KEY', 'NO_API_KEY'))
       @reporting_interval = reporting_interval || 5
       @max_uncompressed_report_size = max_uncompressed_report_size || 4 * 1024 * 1024
       @max_queue_bytes = max_queue_bytes || @max_uncompressed_report_size * 10
