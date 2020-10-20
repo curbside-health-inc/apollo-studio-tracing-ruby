@@ -7,6 +7,8 @@
     "circle:execute": "circleci config process ./.circleci/config.yml > .circleci/processed-config.yml && circleci local execute -c .circleci/processed-config.yml --job"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^5.0.1",
+    "@semantic-release/git": "^9.0.0",
     "commitizen": "^4.2.1",
     "husky": "^4.3.0",
     "prettier": "^2.1.2",
