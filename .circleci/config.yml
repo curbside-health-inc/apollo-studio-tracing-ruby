@@ -72,7 +72,7 @@ workflows:
       - ruby-test:
           matrix:
             parameters:
-              appraisal: ['graphql-1.9', 'graphql-1.10']
+              appraisal: ['graphql-1.9', 'graphql-1.10', 'graphql-1.11']
       # - release:
       #     filters:
       #       branches:
