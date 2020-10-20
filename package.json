@@ -7,7 +7,15 @@
     "circle:execute": "circleci config process ./.circleci/config.yml > .circleci/processed-config.yml && circleci local execute -c .circleci/processed-config.yml --job"
   },
   "devDependencies": {
+    "commitizen": "^4.2.1",
+    "husky": "^4.3.0",
+    "prettier": "^2.1.2",
     "semantic-release": "^17.0.8",
     "semantic-release-rubygem": "^1.0.3"
+  },
+  "husky": {
+    "hooks": {
+      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true"
+    }
   }
 }
