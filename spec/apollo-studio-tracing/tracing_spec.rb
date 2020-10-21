@@ -502,8 +502,7 @@ RSpec.describe ApolloStudioTracing do
         end
       end
 
-      # TODO: Fix error reporting so this works correctly
-      xit 'records index instead of response_name for objects in arrays' do
+      it 'records index instead of response_name for objects in arrays' do
         expect(trace('{ items { id, name } }')).to eq(
           ApolloStudioTracing::Trace.new(
             start_time: { seconds: 1_564_920_001, nanos: 0 },

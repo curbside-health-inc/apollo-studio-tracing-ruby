@@ -38,6 +38,7 @@ module ApolloStudioTracing
   # rubocop:disable Metrics/ClassLength
   class Tracer
     # store string constants to avoid creating new strings for each call to .trace
+    EXECUTE_MULTIPLEX = 'execute_multiplex'
     EXECUTE_QUERY = 'execute_query'
     EXECUTE_QUERY_LAZY = 'execute_query_lazy'
     EXECUTE_FIELD = 'execute_field'
@@ -92,8 +93,8 @@ module ApolloStudioTracing
 
     def trace(key, data, &block)
       case key
-      when EXECUTE_QUERY
-        execute_query(data, &block)
+      when EXECUTE_MULTIPLEX
+        execute_multiplex(data, &block)
       when EXECUTE_QUERY_LAZY
         execute_query_lazy(data, &block)
       when EXECUTE_FIELD
@@ -109,19 +110,26 @@ module ApolloStudioTracing
       context && context[:apollo_tracing_enabled]
     end
 
-    # Step 1:
-    # Create a trace hash on the query context and record start times.
-    def execute_query(data, &block)
-      query = data.fetch(:query)
-      return block.call unless tracing_enabled?(query&.context)
+    def execute_multiplex(data, &block)
+      # Step 1:
+      # Create a trace hash on each query's context and record start times.
+      data.fetch(:multiplex).queries.each { |query| start_trace(query) }
+
+      results = block.call
+
+      # Step 5
+      # Attach the trace to the 'extensions' key of each result
+      results.map { |result| attach_trace_to_result(result) }
+    end
+
+    def start_trace(query)
+      return unless tracing_enabled?(query&.context)
 
       query.context.namespace(ApolloStudioTracing::KEY).merge!(
         start_time: Time.now.utc,
         start_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
         node_map: NodeMap.new,
       )
-
-      block.call
     end
 
     # Step 2:
@@ -231,32 +239,38 @@ module ApolloStudioTracing
     def execute_query_lazy(data, &block)
       result = block.call
 
-      queries = Array(data.fetch(:multiplex)&.queries || data.fetch(:query))
-      queries.map do |query|
-        next unless tracing_enabled?(query&.context)
+      query = data.fetch(:query)
+      return result unless tracing_enabled?(query&.context)
 
-        trace = query.context.namespace(ApolloStudioTracing::KEY)
+      trace = query.context.namespace(ApolloStudioTracing::KEY)
 
-        trace.merge!(
-          end_time: Time.now.utc,
-          end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
-        )
-
-        # Give consumers a chance to fill out additional details in the trace
-        # like Trace::HTTP and client*
-        trace_prepare.call(trace, query)
-
-        @trace_channel.queue(
-          "# #{query.operation_name || '-'}\n#{query_signature.call(query)}",
-          trace,
-          query.context,
-        )
-      end
+      trace.merge!(
+        end_time: Time.now.utc,
+        end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
+      )
 
       result
     end
 
     private
+
+    def attach_trace_to_result(result)
+      return result unless tracing_enabled?(result.context)
+
+      trace = result.context.namespace(ApolloStudioTracing::KEY)
+
+      result['errors']&.each do |error|
+        trace[:node_map].add_error(error)
+      end
+
+      @trace_channel.queue(
+        "# #{result.query.operation_name || '-'}\n#{query_signature.call(result.query)}",
+        trace,
+        result.context,
+      )
+
+      result
+    end
 
     def hostname
       @hostname ||= Socket.gethostname
