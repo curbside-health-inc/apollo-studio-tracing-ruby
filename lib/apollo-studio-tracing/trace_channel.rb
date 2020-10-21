@@ -58,10 +58,6 @@ module ApolloStudioTracing
             @queue_full = false
           end
 
-          # TODO: If there are errors during query validation, that could also cause a missing
-          # start_time
-          raise NotInstalledError unless trace[:start_time]
-
           proto = ApolloStudioTracing::Trace.new(
             start_time: to_proto_timestamp(trace[:start_time]),
             end_time: to_proto_timestamp(trace[:end_time]),
@@ -164,7 +160,7 @@ module ApolloStudioTracing
     end
 
     def to_proto_timestamp(time)
-      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time.nsec)
+      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time&.nsec || 0)
     end
   end
   # rubocop:enable Metrics/ClassLength
