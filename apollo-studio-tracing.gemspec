@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Luke Saniwck']
   spec.email         = ['luke@enjoy.com']
 
-  spec.summary       = 'A Ruby implementation of Apollo Studio tracing'
+  spec.summary       = 'A Ruby implementation of Apollo GraphQL Studio tracing'
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/EnjoyTech/apollo-studio-tracing-ruby'
   spec.license       = 'MIT'
