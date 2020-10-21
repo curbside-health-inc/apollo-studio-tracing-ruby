@@ -562,6 +562,58 @@ RSpec.describe ApolloStudioTracing do
           ),
         )
       end
+
+      context 'when there is a parsing error' do
+        it 'properly captures the error' do
+          expect(trace('{ items { id, name }')).to eq(
+            ApolloStudioTracing::Trace.new(
+              start_time: { seconds: 1_564_920_001, nanos: 0 },
+              end_time: { seconds: 1_564_920_002, nanos: 0 },
+              duration_ns: 1,
+              root: {
+                child: [],
+                error: [{
+                  message: 'Unexpected end of document',
+                  location: [],
+                  json: {
+                    message: 'Unexpected end of document',
+                    locations: [],
+                  }.to_json,
+                }],
+              },
+            ),
+          )
+        end
+      end
+
+      context 'when there is a validation error' do
+        it 'properly captures the error' do
+          expect(trace('{ nonExistant }')).to eq(
+            ApolloStudioTracing::Trace.new(
+              start_time: { seconds: 1_564_920_001, nanos: 0 },
+              end_time: { seconds: 1_564_920_002, nanos: 0 },
+              duration_ns: 1,
+              root: {
+                child: [],
+                error: [{
+                  message: "Field 'nonExistant' doesn't exist on type 'Query'",
+                  location: [{ line: 1, column: 3 }],
+                  json: {
+                    message: "Field 'nonExistant' doesn't exist on type 'Query'",
+                    locations: [{ line: 1, column: 3 }],
+                    path: ['query', 'nonExistant'],
+                    extensions: {
+                      code: 'undefinedField',
+                      typeName: 'Query',
+                      fieldName: 'nonExistant',
+                    },
+                  }.to_json,
+                }],
+              },
+            ),
+          )
+        end
+      end
     end
   end
 
