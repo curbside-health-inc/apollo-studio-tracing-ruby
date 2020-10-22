@@ -13,7 +13,7 @@ module ApolloStudioTracing
   attr_accessor :logger
 
   # TODO: Initialize this to Rails.logger in a Railtie
-  self.logger = Logger.new(STDOUT)
+  self.logger = Rails.logger || Logger.new(STDOUT)
 
   def use(schema, **options)
     tracer = ApolloStudioTracing::Tracer.new(**options)
