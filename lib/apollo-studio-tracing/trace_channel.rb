@@ -58,6 +58,10 @@ module ApolloStudioTracing
             @queue_full = false
           end
 
+          if debug_reports?
+            ApolloStudioTracing.logger.info("Queueing a trace for #{query_key}")
+          end
+
           proto = ApolloStudioTracing::Trace.new(
             start_time: to_proto_timestamp(trace[:start_time]),
             end_time: to_proto_timestamp(trace[:end_time]),
