@@ -74,6 +74,8 @@ module ApolloStudioTracing
           encoded_trace = ApolloStudioTracing::Trace.encode(proto)
           @queue << [query_key, encoded_trace]
           @queue_bytes.increment(encoded_trace.bytesize + query_key.bytesize)
+
+          ensure_thread_started
         end
       end
     end
@@ -82,6 +84,14 @@ module ApolloStudioTracing
       @uploader_thread = Thread.new do
         run_uploader
       end
+    end
+
+    def ensure_thread_started
+      ApolloStudioTracing.logger.info('Ensuring thread started...')
+      return if @uploader_thread&.alive?
+
+      ApolloStudioTracing.logger.info('Thread gone, starting...')
+      start
     end
 
     def flush
@@ -111,6 +121,9 @@ module ApolloStudioTracing
       drain_queue until @shutdown_barrier.await_shutdown(reporting_interval)
       puts 'Stopping uploader run loop'
       drain_queue
+    rescue StandardError => e
+      ApolloStudioTracing.logger.warn("Exception thrown in uploader process. #{e}")
+      raise e
     ensure
       ApolloStudioTracing.logger.info('Apollo trace uploader exiting')
     end
