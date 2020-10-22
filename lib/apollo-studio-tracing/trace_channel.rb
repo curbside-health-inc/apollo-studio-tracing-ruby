@@ -160,7 +160,7 @@ module ApolloStudioTracing
     end
 
     def to_proto_timestamp(time)
-      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time&.nsec || 0)
+      Google::Protobuf::Timestamp.new(seconds: time.to_i, nanos: time.nsec)
     end
   end
   # rubocop:enable Metrics/ClassLength

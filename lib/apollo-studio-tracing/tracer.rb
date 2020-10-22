@@ -118,7 +118,7 @@ module ApolloStudioTracing
       results = block.call
 
       # Step 5
-      # Attach the trace to the 'extensions' key of each result
+      #  Enqueue the final trace onto the TraceChannel.
       results.map { |result| attach_trace_to_result(result) }
     end
 
@@ -234,20 +234,24 @@ module ApolloStudioTracing
     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Step 4:
-    # Record end times and merge them into the trace hash. Enqueue the final trace onto the
-    # TraceChannel.
+    # Record end times and merge them into the trace hash
     def execute_query_lazy(data, &block)
       result = block.call
 
-      query = data.fetch(:query)
-      return result unless tracing_enabled?(query&.context)
+      # Normalize to an array of queries regardless of whether we are multiplexing or performing a
+      # single query.
+      queries = Array(data.fetch(:multiplex)&.queries || data.fetch(:query))
 
-      trace = query.context.namespace(ApolloStudioTracing::KEY)
+      queries.map do |query|
+        next unless tracing_enabled?(query&.context)
 
-      trace.merge!(
-        end_time: Time.now.utc,
-        end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
-      )
+        trace = query.context.namespace(ApolloStudioTracing::KEY)
+
+        trace.merge!(
+          end_time: Time.now.utc,
+          end_time_nanos: Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond),
+        )
+      end
 
       result
     end
