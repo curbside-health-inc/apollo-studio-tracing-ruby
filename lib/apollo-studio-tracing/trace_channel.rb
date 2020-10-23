@@ -87,10 +87,8 @@ module ApolloStudioTracing
     end
 
     def ensure_thread_started
-      ApolloStudioTracing.logger.info('Ensuring thread started...')
       return if @uploader_thread&.alive?
 
-      ApolloStudioTracing.logger.info('Thread gone, starting...')
       start
     end
 
