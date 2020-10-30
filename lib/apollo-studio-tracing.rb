@@ -33,9 +33,7 @@ module ApolloStudioTracing
     tracers.each(&:shutdown_trace_channel)
   end
 
-  trap('SIGINT') do
-    Thread.new { shutdown }
-  end
+  at_exit { shutdown }
 
   private
 
