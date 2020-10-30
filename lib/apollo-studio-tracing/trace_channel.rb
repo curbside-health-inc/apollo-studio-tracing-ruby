@@ -104,6 +104,7 @@ module ApolloStudioTracing
     def shutdown
       return unless @uploader_thread
 
+      ApolloStudioTracing.logger.info('Shutting down Apollo trace channel...')
       @shutdown_barrier.shutdown
       @uploader_thread.join
     end
