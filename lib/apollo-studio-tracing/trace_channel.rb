@@ -115,15 +115,15 @@ module ApolloStudioTracing
     end
 
     def run_uploader
-      ApolloStudioTracing.logger.info('Apollo trace uploader starting')
+      ApolloStudioTracing.logger.info('Trace uploader starting')
       drain_queue until @shutdown_barrier.await_shutdown(reporting_interval)
-      puts 'Stopping uploader run loop'
+      ApolloStudioTracing.logger.info('Draining queue before shutdown...')
       drain_queue
     rescue StandardError => e
       ApolloStudioTracing.logger.warn("Exception thrown in uploader process. #{e}")
       raise e
     ensure
-      ApolloStudioTracing.logger.info('Apollo trace uploader exiting')
+      ApolloStudioTracing.logger.info('Trace uploader exiting')
     end
 
     def drain_queue
