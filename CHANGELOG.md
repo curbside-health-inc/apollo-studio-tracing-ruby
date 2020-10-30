@@ -1,3 +1,10 @@
+# [1.0.0-beta.2](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2020-10-30)
+
+
+### Bug Fixes
+
+* **tracing:** avoid trapping SIGINT, just use `at_exit` ([455a6fe](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/commit/455a6fe14764949b8ffd303f7082c9f01eff3ca5))
+
 # [1.0.0-beta.1](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/compare/v0.1.0...v1.0.0-beta.1) (2020-10-23)
 
 
