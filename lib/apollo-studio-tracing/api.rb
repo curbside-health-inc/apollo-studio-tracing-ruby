@@ -22,13 +22,13 @@ module ApolloStudioTracing
       if e.is_a?(RetryableUploadAttemptError) && attempt < max_attempts
         retry_delay = min_retry_delay_secs * 2**attempt
         ApolloStudioTracing.logger.warn(
-          "Attempt to send Apollo trace report failed and will be retried in #{retry_delay} " \
+          "Attempt to send trace report failed and will be retried in #{retry_delay} " \
           "secs: #{e.message}",
         )
         sleep(retry_delay)
         retry
       else
-        ApolloStudioTracing.logger.warn("Failed to send Apollo trace report: #{e.message}")
+        ApolloStudioTracing.logger.warn("Failed to send trace report: #{e.message}")
       end
     end
 

@@ -3,6 +3,7 @@
 require 'apollo-studio-tracing/proto'
 require 'apollo-studio-tracing/node_map'
 require 'apollo-studio-tracing/tracer'
+require 'apollo-studio-tracing/logger'
 
 module ApolloStudioTracing
   extend self
@@ -13,7 +14,7 @@ module ApolloStudioTracing
   attr_accessor :logger
 
   # TODO: Initialize this to Rails.logger in a Railtie
-  self.logger = Logger.new(STDOUT)
+  self.logger = ApolloLogger.new(STDOUT)
 
   def use(schema, **options)
     tracer = ApolloStudioTracing::Tracer.new(**options)
