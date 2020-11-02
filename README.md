@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/EnjoyTech/apollo-studio-tracing-ruby/tree/master.svg?style=svg)](https://circleci.com/gh/EnjoyTech/apollo-studio-tracing-ruby/tree/master)
 
-This gem extends the [GraphQL Ruby](http://graphql-ruby.org/) gem to add support for sending trace data to [Apollo Studio](https://www.apollographql.com/docs/studio/). It is intended to be a full-featured replacement for the unmaintained [apollo-tracing-ruby](https://github.com/uniiverse/apollo-tracing-ruby) gem, and it is built HEAVILY from the work done within the Gusto [apollo-federation-ruby](https://github.com/Gusto/apollo-federation-ruby) gem.
+This gem extends the [GraphQL Ruby](http://graphql-ruby.org/) gem to add support for sending trace data to [Apollo Studio](https://www.apollographql.com/docs/studio/). It is intended to be a full-featured replacement for the unmaintained [apollo-tracing-ruby](https://github.com/uniiverse/apollo-tracing-ruby) gem, and it is built HEAVILY from the work done within the Gusto [apollo-federation-ruby](https://github.com/Gusto/apollo-federation-ruby) gem as well an exploratory branch created [here](https://github.com/salsify/apollo-tracing-ruby/tree/feature/new-apollo-api).
 
 ## DISCLAIMER
 
