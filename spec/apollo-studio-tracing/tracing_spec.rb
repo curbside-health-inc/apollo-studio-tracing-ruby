@@ -638,4 +638,79 @@ RSpec.describe ApolloStudioTracing do
 
     it_behaves_like 'a basic tracer'
   end
+
+  context 'with enabled flag' do
+    let(:report_header) do
+      ApolloStudioTracing::ReportHeader.new(
+        hostname: 'localhost',
+        agent_version: '1',
+        service_version: '1',
+        runtime_version: '1',
+        uname: 'test',
+        schema_tag: 'test',
+        executable_schema_id: 'test',
+      )
+    end
+    let(:trace_channel) do
+      ApolloStudioTracing::TraceChannel.new(report_header: report_header)
+    end
+    let(:schema) do
+      query_obj = Class.new(GraphQL::Schema::Object) do
+        graphql_name 'Query'
+
+        field :test, String, null: false
+
+        def test
+          'hello world'
+        end
+      end
+
+      Class.new(base_schema) do
+        query query_obj
+      end
+    end
+
+    before do
+      allow(ApolloStudioTracing::TraceChannel).to receive(:new).and_return(trace_channel)
+    end
+
+    context 'with no value' do
+      let(:base_schema) do
+        Class.new(GraphQL::Schema) do
+          use ApolloStudioTracing
+        end
+      end
+
+      it 'does starts up a trace channel' do
+        schema.execute('{ test }')
+        expect(ApolloStudioTracing::TraceChannel).to have_received(:new)
+      end
+    end
+
+    context 'with a false value' do
+      let(:base_schema) do
+        Class.new(GraphQL::Schema) do
+          use ApolloStudioTracing, enabled: false
+        end
+      end
+
+      it 'does not start up a trace channel' do
+        schema.execute('{ test }')
+        expect(ApolloStudioTracing::TraceChannel).not_to have_received(:new)
+      end
+    end
+
+    context 'with a true value' do
+      let(:base_schema) do
+        Class.new(GraphQL::Schema) do
+          use ApolloStudioTracing, enabled: true
+        end
+      end
+
+      it 'does start up a trace channel' do
+        schema.execute('{ test }')
+        expect(ApolloStudioTracing::TraceChannel).to have_received(:new)
+      end
+    end
+  end
 end
