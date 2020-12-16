@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/compare/v1.0.1...v1.1.0) (2020-12-16)
+
+
+### Features
+
+* support global `enabled` flag for tracing ([16d9186](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/commit/16d91865db51315c2b0a378402d96a9414a31c8f))
+
 ## [1.0.1](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/compare/v1.0.0...v1.0.1) (2020-11-02)
 
 
