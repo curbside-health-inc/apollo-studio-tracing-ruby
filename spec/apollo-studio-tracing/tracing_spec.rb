@@ -77,6 +77,8 @@ RSpec.describe ApolloStudioTracing do
       ns = 42
       allow(Process).to receive(:clock_gettime)
         .with(Process::CLOCK_MONOTONIC, :nanosecond) { ns += 1 }
+      allow(Process).to receive(:clock_gettime)
+        .with(Process::CLOCK_MONOTONIC) { ns += 1 }
     end
 
     describe 'respecting options on context' do
