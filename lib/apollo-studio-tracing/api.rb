@@ -38,8 +38,8 @@ module ApolloStudioTracing
       body = compress ? gzip(report_data) : report_data
       headers = { 'X-Api-Key' => api_key }
       headers['Content-Encoding'] = 'gzip' if compress
+      puts('BODY', body)
       result = Net::HTTP.post(APOLLO_URI, body, headers)
-      p body
       ApolloStudioTracing.logger.info("API_KEY - #{api_key}")
 
       if result.is_a?(Net::HTTPServerError)
