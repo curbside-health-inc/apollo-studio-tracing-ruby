@@ -40,7 +40,6 @@ module ApolloStudioTracing
       headers['Content-Encoding'] = 'gzip' if compress
       ApolloStudioTracing.logger.info("BODY - #{body}")
       result = Net::HTTP.post(APOLLO_URI, body, headers)
-      ApolloStudioTracing.logger.info("API_KEY - #{api_key}")
 
       if result.is_a?(Net::HTTPServerError)
         raise RetryableUploadAttemptError, "#{result.code} #{result.message} - #{result.body}"
