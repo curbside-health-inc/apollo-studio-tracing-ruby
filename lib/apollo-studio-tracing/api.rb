@@ -36,9 +36,8 @@ module ApolloStudioTracing
 
     def attempt_upload(report_data, compress:, api_key:)
       body = compress ? gzip(report_data) : report_data
-      headers = { 'X-Api-Key' => api_key }
+      headers = { 'X-Api-Key' => api_key, 'user-agent' => 'ApolloServerPluginUsageReporting', 'accept' => 'application/json' }
       headers['Content-Encoding'] = 'gzip' if compress
-      ApolloStudioTracing.logger.info("BODY - #{body}")
       result = Net::HTTP.post(APOLLO_URI, body, headers)
 
       if result.is_a?(Net::HTTPServerError)
