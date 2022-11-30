@@ -1,4 +1,5 @@
 syntax = "proto3";
+package mdg.engine.proto;
 
 
 import "google/protobuf/timestamp.proto";
