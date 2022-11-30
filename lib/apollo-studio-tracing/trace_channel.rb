@@ -164,9 +164,6 @@ module ApolloStudioTracing
         ApolloStudioTracing.logger.info(
           "Sending trace report:\n#{JSON.pretty_generate(JSON.parse(trace_report.to_json))}",
         )
-        File.open(Rails.root.join('req.trace'), "wb") do |f|
-          f.write ApolloStudioTracing::Report.encode(trace_report)
-        end
       end
 
       ApolloStudioTracing::API.upload(
