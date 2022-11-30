@@ -1,0 +1,7 @@
+version: '3.9'
+name: 'apollo-studio-tracing-ruby'
+services:
+  lib:
+    build: .
+    volumes:
+      - '.:/app'

@@ -47,7 +47,7 @@ module ApolloStudioTracing
     attr_reader :trace_prepare, :query_signature
 
     def initialize(
-      schema_tag: nil,
+      graph_ref: nil,
       executable_schema_id: nil,
       service_version: nil,
       trace_prepare: nil,
@@ -69,7 +69,7 @@ module ApolloStudioTracing
         service_version: service_version,
         runtime_version: RUBY_DESCRIPTION,
         uname: uname,
-        schema_tag: schema_tag || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
+        graph_ref: graph_ref || ENV.fetch('ENGINE_SCHEMA_TAG', 'current'),
         executable_schema_id: executable_schema_id,
       )
       @trace_channel = ApolloStudioTracing::TraceChannel.new(

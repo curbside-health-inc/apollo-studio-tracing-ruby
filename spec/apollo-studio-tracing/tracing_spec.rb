@@ -41,7 +41,7 @@ RSpec.describe ApolloStudioTracing do
         service_version: '1',
         runtime_version: '1',
         uname: 'test',
-        schema_tag: 'test',
+        graph_ref: 'test',
         executable_schema_id: 'test',
       )
     end
@@ -649,7 +649,7 @@ RSpec.describe ApolloStudioTracing do
         service_version: '1',
         runtime_version: '1',
         uname: 'test',
-        schema_tag: 'test',
+        graph_ref: 'test',
         executable_schema_id: 'test',
       )
     end
