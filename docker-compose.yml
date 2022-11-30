@@ -4,4 +4,4 @@ services:
   lib:
     build: .
     volumes:
-      - '.:/app'
+      - '.:/lib'
