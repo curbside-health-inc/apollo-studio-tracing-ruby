@@ -9,7 +9,7 @@ module ApolloStudioTracing
   module API
     extend self
 
-    APOLLO_URL = 'https://engine-report.apollodata.com/api/ingress/traces'
+    APOLLO_URL = 'https://usage-reporting.api.apollographql.com/api/ingress/traces'
     APOLLO_URI = ::URI.parse(APOLLO_URL)
     UploadAttemptError = Class.new(StandardError)
     RetryableUploadAttemptError = Class.new(UploadAttemptError)
@@ -36,7 +36,7 @@ module ApolloStudioTracing
 
     def attempt_upload(report_data, compress:, api_key:)
       body = compress ? gzip(report_data) : report_data
-      headers = { 'X-Api-Key' => api_key }
+      headers = { 'X-Api-Key' => api_key, 'user-agent' => 'ApolloServerPluginUsageReporting', 'accept' => 'application/json' }
       headers['Content-Encoding'] = 'gzip' if compress
       result = Net::HTTP.post(APOLLO_URI, body, headers)
 
