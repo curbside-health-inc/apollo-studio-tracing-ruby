@@ -12,7 +12,7 @@ module ApolloStudioTracing
     class << self
       attr_reader :reports
 
-      def upload(report, _options)
+      def upload(report, **_options)
         @reports << ApolloStudioTracing::Report.decode(report)
       end
 
@@ -28,6 +28,15 @@ module ApolloStudioTracing
         @reports = []
       end
     end
+  end
+end
+
+# A stand in for a lazily resolved value (see `lazy_resolve` below).
+class Lazy
+  attr_reader :value
+
+  def initialize(value = 'lazy_value')
+    @value = value
   end
 end
 
@@ -52,9 +61,7 @@ RSpec.describe ApolloStudioTracing do
     before do
       stub_const('ApolloStudioTracing::API', api)
       allow(ApolloStudioTracing::TraceChannel).to receive(:new).and_return(trace_channel)
-      allow(trace_channel).to receive(:start).and_return(nil)
-      allow(trace_channel).to receive(:flush).and_return(nil)
-      allow(trace_channel).to receive(:shutdown).and_return(nil)
+      allow(trace_channel).to receive_messages(start: nil, flush: nil, shutdown: nil)
       original_queue = trace_channel.method(:queue)
       allow(trace_channel).to receive(:queue) do |query_key, trace, context|
         original_queue.call(query_key, trace, context)
@@ -68,13 +75,18 @@ RSpec.describe ApolloStudioTracing do
 
     # configure clocks to increment by 1 for each call
     before do
-      t = Time.new(2019, 8, 4, 12, 0, 0, '+00:00')
-      allow(Time).to receive(:now) { t += 1 }
+      # The wall clock is frozen: graphql-ruby calls `execute_query_lazy` a variable number of
+      # times per query, so the number of `Time.now` calls isn't stable across versions. The
+      # monotonic clock below is what the interesting assertions are built on.
+      allow(Time).to receive(:now).and_return(Time.new(2019, 8, 4, 12, 0, 0, '+00:00'))
 
       # nanos are used for durations and offsets, so you'll never see 42, 43, ...
       # instead, you'll see the difference from the first call (the start time)
       # which will be 1, 2, 3 ...
       ns = 42
+      # Other threads (the trace channel uploader, concurrent-ruby) ask for the clock with
+      # different units, so let anything we don't care about through to the real clock.
+      allow(Process).to receive(:clock_gettime).and_call_original
       allow(Process).to receive(:clock_gettime)
         .with(Process::CLOCK_MONOTONIC, :nanosecond) { ns += 1 }
       allow(Process).to receive(:clock_gettime)
@@ -167,8 +179,8 @@ RSpec.describe ApolloStudioTracing do
       it 'records timing for children' do
         query = '{ parent { id, child { id, grandchild { id } } } }'
         expect(trace(query)).to eq(ApolloStudioTracing::Trace.new(
-                                     start_time: { seconds: 1_564_920_001, nanos: 0 },
-                                     end_time: { seconds: 1_564_920_002, nanos: 0 },
+                                     start_time: { seconds: 1_564_920_000, nanos: 0 },
+                                     end_time: { seconds: 1_564_920_000, nanos: 0 },
                                      duration_ns: 13,
                                      root: {
                                        child: [{
@@ -217,8 +229,8 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works for scalar arrays' do
         expect(trace('{ strings }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
           duration_ns: 3,
           root: {
             child: [{
@@ -231,14 +243,6 @@ RSpec.describe ApolloStudioTracing do
           },
         )
       end
-    end
-
-    class Lazy
-      def initialize(value = 'lazy_value')
-        @value = value
-      end
-
-      attr_reader :value
     end
 
     describe 'lazy values' do
@@ -292,8 +296,8 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with lazy values' do
         expect(trace('{ lazyScalar }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
           duration_ns: 4,
           root: {
             child: [{
@@ -313,18 +317,18 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with an array of lazy scalars' do
         expect(trace('{ arrayOfLazyScalars }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
           # The old runtime and the interpreter handle arrays of lazy objects differently.
           # The old runtime doesn't trigger the `execute_field_lazy` tracer event, so we have to
           # use the (inaccurate) end times from the `execute_field` event.
-          duration_ns: schema.interpreter? ? 5 : 3,
+          duration_ns: 5,
           root: {
             child: [{
               response_name: 'arrayOfLazyScalars',
               type: '[String!]!',
               start_time: 1,
-              end_time: schema.interpreter? ? 4 : 2,
+              end_time: 4,
               parent_type: 'Query',
             }],
           },
@@ -333,8 +337,8 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with a lazy array of scalars' do
         expect(trace('{ lazyArrayOfScalars }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
           duration_ns: 4,
           root: {
             child: [{
@@ -350,15 +354,15 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with a lazy array of lazy scalars' do
         expect(trace('{ lazyArrayOfLazyScalars }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
-          duration_ns: schema.interpreter? ? 6 : 4,
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
+          duration_ns: 6,
           root: {
             child: [{
               response_name: 'lazyArrayOfLazyScalars',
               type: '[String!]!',
               start_time: 1,
-              end_time: schema.interpreter? ? 5 : 3,
+              end_time: 5,
               parent_type: 'Query',
             }],
           },
@@ -367,15 +371,15 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with array of lazy objects' do
         expect(trace('{ arrayOfLazyObjects { id } }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
-          duration_ns: schema.interpreter? ? 9 : 7,
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
+          duration_ns: 9,
           root: {
             child: [{
               response_name: 'arrayOfLazyObjects',
               type: '[Item!]!',
               start_time: 1,
-              end_time: schema.interpreter? ? 6 : 2,
+              end_time: 6,
               parent_type: 'Query',
               child: [
                 {
@@ -383,8 +387,8 @@ RSpec.describe ApolloStudioTracing do
                   child: [{
                     response_name: 'id',
                     type: 'String!',
-                    start_time: schema.interpreter? ? 4 : 3,
-                    end_time: schema.interpreter? ? 5 : 4,
+                    start_time: 4,
+                    end_time: 5,
                     parent_type: 'Item',
                   }],
                 },
@@ -393,8 +397,8 @@ RSpec.describe ApolloStudioTracing do
                   child: [{
                     response_name: 'id',
                     type: 'String!',
-                    start_time: schema.interpreter? ? 7 : 5,
-                    end_time: schema.interpreter? ? 8 : 6,
+                    start_time: 7,
+                    end_time: 8,
                     parent_type: 'Item',
                   }],
                 },
@@ -406,8 +410,8 @@ RSpec.describe ApolloStudioTracing do
 
       it 'works with a lazy array of objects' do
         expect(trace('{ lazyArrayOfObjects { id } }')).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
           duration_ns: 8,
           root: {
             child: [{
@@ -446,9 +450,9 @@ RSpec.describe ApolloStudioTracing do
       it 'works with multiple lazy fields' do
         query = '{ lazyScalar arrayOfLazyScalars lazyArrayOfScalars }'
         expect(trace(query)).to eq ApolloStudioTracing::Trace.new(
-          start_time: { seconds: 1_564_920_001, nanos: 0 },
-          end_time: { seconds: 1_564_920_002, nanos: 0 },
-          duration_ns: schema.interpreter? ? 11 : 9,
+          start_time: { seconds: 1_564_920_000, nanos: 0 },
+          end_time: { seconds: 1_564_920_000, nanos: 0 },
+          duration_ns: 11,
           root: {
             child: [{
               response_name: 'lazyScalar',
@@ -460,7 +464,7 @@ RSpec.describe ApolloStudioTracing do
               response_name: 'arrayOfLazyScalars',
               type: '[String!]!',
               start_time: 3,
-              end_time: schema.interpreter? ? 10 : 4,
+              end_time: 10,
               parent_type: 'Query',
             }, {
               response_name: 'lazyArrayOfScalars',
@@ -507,8 +511,8 @@ RSpec.describe ApolloStudioTracing do
       it 'records index instead of response_name for objects in arrays' do
         expect(trace('{ items { id, name } }')).to eq(
           ApolloStudioTracing::Trace.new(
-            start_time: { seconds: 1_564_920_001, nanos: 0 },
-            end_time: { seconds: 1_564_920_002, nanos: 0 },
+            start_time: { seconds: 1_564_920_000, nanos: 0 },
+            end_time: { seconds: 1_564_920_000, nanos: 0 },
             duration_ns: 11,
             root: {
               child: [{
@@ -567,20 +571,25 @@ RSpec.describe ApolloStudioTracing do
 
       context 'when there is a parsing error' do
         it 'properly captures the error' do
-          expect(trace('{ items { id, name }')).to eq(
+          # The wording and location of a syntax error come from graphql-ruby's parser and
+          # change between versions, so assert against whatever it reported.
+          result = schema.execute('{ items { id, name }', context: { apollo_tracing_enabled: true })
+          parse_error = result['errors'].first
+          locations = Array(parse_error['locations']).map do |location|
+            { line: location['line'], column: location['column'] }
+          end
+
+          expect(api.traces[0]).to eq(
             ApolloStudioTracing::Trace.new(
-              start_time: { seconds: 1_564_920_001, nanos: 0 },
-              end_time: { seconds: 1_564_920_002, nanos: 0 },
+              start_time: { seconds: 1_564_920_000, nanos: 0 },
+              end_time: { seconds: 1_564_920_000, nanos: 0 },
               duration_ns: 1,
               root: {
                 child: [],
                 error: [{
-                  message: 'Unexpected end of document',
-                  location: [],
-                  json: {
-                    message: 'Unexpected end of document',
-                    locations: [],
-                  }.to_json,
+                  message: parse_error['message'],
+                  location: locations,
+                  json: JSON.dump(parse_error),
                 }],
               },
             ),
@@ -592,8 +601,8 @@ RSpec.describe ApolloStudioTracing do
         it 'properly captures the error' do
           expect(trace('{ nonExistant }')).to eq(
             ApolloStudioTracing::Trace.new(
-              start_time: { seconds: 1_564_920_001, nanos: 0 },
-              end_time: { seconds: 1_564_920_002, nanos: 0 },
+              start_time: { seconds: 1_564_920_000, nanos: 0 },
+              end_time: { seconds: 1_564_920_000, nanos: 0 },
               duration_ns: 1,
               root: {
                 child: [],
@@ -619,7 +628,7 @@ RSpec.describe ApolloStudioTracing do
     end
   end
 
-  context 'with the legacy runtime' do
+  context 'with a schema that traces with ApolloStudioTracing' do
     let(:base_schema) do
       Class.new(GraphQL::Schema) do
         use ApolloStudioTracing
@@ -629,16 +638,32 @@ RSpec.describe ApolloStudioTracing do
     it_behaves_like 'a basic tracer'
   end
 
-  context 'with the new interpreter' do
-    let(:base_schema) do
+  describe 'installing the trace' do
+    let(:schema) do
       Class.new(GraphQL::Schema) do
         use ApolloStudioTracing
-        use GraphQL::Execution::Interpreter
-        use GraphQL::Analysis::AST
       end
     end
 
-    it_behaves_like 'a basic tracer'
+    # graphql-ruby deprecated (and will remove) the `Schema.tracer` API in favour of
+    # module based traces, so make sure we never fall back to it.
+    it 'installs a module based trace rather than a legacy tracer' do
+      expect(schema.new_trace).to be_a(ApolloStudioTracing::Tracing)
+    end
+
+    it 'does not use the deprecated Schema.tracer API' do
+      allow(GraphQL::Schema).to receive(:tracer)
+      Class.new(GraphQL::Schema) { use ApolloStudioTracing }
+      expect(GraphQL::Schema).not_to have_received(:tracer)
+    end
+
+    it 'supports installing the trace in a non-default trace mode' do
+      other_schema = Class.new(GraphQL::Schema)
+      described_class.use(other_schema, mode: :apollo)
+
+      expect(other_schema.new_trace(mode: :apollo)).to be_a(ApolloStudioTracing::Tracing)
+      expect(other_schema.new_trace).not_to be_a(ApolloStudioTracing::Tracing)
+    end
   end
 
   context 'with enabled flag' do

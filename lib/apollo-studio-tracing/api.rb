@@ -11,8 +11,11 @@ module ApolloStudioTracing
 
     APOLLO_URL = 'https://usage-reporting.api.apollographql.com/api/ingress/traces'
     APOLLO_URI = ::URI.parse(APOLLO_URL)
-    UploadAttemptError = Class.new(StandardError)
-    RetryableUploadAttemptError = Class.new(UploadAttemptError)
+    class UploadAttemptError < StandardError
+    end
+
+    class RetryableUploadAttemptError < UploadAttemptError
+    end
 
     def upload(report_data, max_attempts:, min_retry_delay_secs:, **options)
       attempt ||= 0
@@ -20,7 +23,7 @@ module ApolloStudioTracing
     rescue UploadAttemptError => e
       attempt += 1
       if e.is_a?(RetryableUploadAttemptError) && attempt < max_attempts
-        retry_delay = min_retry_delay_secs * 2**attempt
+        retry_delay = min_retry_delay_secs * (2**attempt)
         ApolloStudioTracing.logger.warn(
           "Attempt to send trace report failed and will be retried in #{retry_delay} " \
           "secs: #{e.message}",
@@ -36,7 +39,8 @@ module ApolloStudioTracing
 
     def attempt_upload(report_data, compress:, api_key:)
       body = compress ? gzip(report_data) : report_data
-      headers = { 'X-Api-Key' => api_key, 'user-agent' => 'ApolloServerPluginUsageReporting', 'accept' => 'application/json' }
+      headers = { 'X-Api-Key' => api_key, 'user-agent' => 'ApolloServerPluginUsageReporting',
+                  'accept' => 'application/json', }
       headers['Content-Encoding'] = 'gzip' if compress
       result = Net::HTTP.post(APOLLO_URI, body, headers)
 

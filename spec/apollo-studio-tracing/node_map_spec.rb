@@ -37,7 +37,7 @@ RSpec.describe ApolloStudioTracing::NodeMap do
     error = {
       'path' => ['_entities', 4, 'reviews'],
       'message' => 'whoops',
-      'locations' => ['line' => 2, 'column' => 4],
+      'locations' => [{ 'line' => 2, 'column' => 4 }],
     }
     map.add_error(error)
 
@@ -56,7 +56,7 @@ RSpec.describe ApolloStudioTracing::NodeMap do
     error = {
       'path' => ['_entities', 4, 'reviews'],
       'message' => 'whoops',
-      'locations' => ['line' => 2, 'column' => 4],
+      'locations' => [{ 'line' => 2, 'column' => 4 }],
     }
     map.add_error(error)
 

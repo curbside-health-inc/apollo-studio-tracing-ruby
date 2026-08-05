@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'socket'
+
 require 'apollo-studio-tracing/version'
 require 'apollo-studio-tracing/trace_channel'
 
@@ -37,13 +39,6 @@ require 'apollo-studio-tracing/trace_channel'
 module ApolloStudioTracing
   # rubocop:disable Metrics/ClassLength
   class Tracer
-    # store string constants to avoid creating new strings for each call to .trace
-    EXECUTE_MULTIPLEX = 'execute_multiplex'
-    EXECUTE_QUERY = 'execute_query'
-    EXECUTE_QUERY_LAZY = 'execute_query_lazy'
-    EXECUTE_FIELD = 'execute_field'
-    EXECUTE_FIELD_LAZY = 'execute_field_lazy'
-
     attr_reader :trace_prepare, :query_signature
 
     def initialize(
@@ -56,12 +51,10 @@ module ApolloStudioTracing
       **trace_channel_options
     )
       @trace_prepare = trace_prepare || proc {}
-      @query_signature = query_signature || proc do |query|
-        # TODO: This should be smarter
-        # TODO (lsanwick) Replace with reference implementation from
-        # https://github.com/apollographql/apollo-tooling/blob/master/packages/apollo-graphql/src/operationId.ts
-        query.query_string
-      end
+      # TODO: This should be smarter
+      # TODO (lsanwick) Replace with reference implementation from
+      # https://github.com/apollographql/apollo-tooling/blob/master/packages/apollo-graphql/src/operationId.ts
+      @query_signature = query_signature || proc(&:query_string)
 
       report_header = ApolloStudioTracing::ReportHeader.new(
         hostname: hostname,
@@ -91,31 +84,16 @@ module ApolloStudioTracing
       @trace_channel.flush
     end
 
-    def trace(key, data, &block)
-      case key
-      when EXECUTE_MULTIPLEX
-        execute_multiplex(data, &block)
-      when EXECUTE_QUERY_LAZY
-        execute_query_lazy(data, &block)
-      when EXECUTE_FIELD
-        execute_field(data, &block)
-      when EXECUTE_FIELD_LAZY
-        execute_field_lazy(data, &block)
-      else
-        yield
-      end
-    end
-
     def tracing_enabled?(context)
       context && context[:apollo_tracing_enabled]
     end
 
-    def execute_multiplex(data, &block)
+    def execute_multiplex(multiplex)
       # Step 1:
       # Create a trace hash on each query's context and record start times.
-      data.fetch(:multiplex).queries.each { |query| start_trace(query) }
+      multiplex.queries.each { |query| start_trace(query) }
 
-      results = block.call
+      results = yield
 
       # Step 5
       #  Enqueue the final trace onto the TraceChannel.
@@ -138,49 +116,34 @@ module ApolloStudioTracing
     # * Create a trace "node" and attach field details.
     # * Propagate the error (if necessary) so it ends up in the top-level errors array.
     #
-    # The values in `data` are different depending on the executor runtime.
-    # https://graphql-ruby.org/api-doc/1.9.3/GraphQL/Tracing
-    #
     # Nodes are added the NodeMap stored in the trace hash.
     #
-    # Errors are added to nodes in `ApolloStudioTracing::Tracing.attach_trace_to_result`
+    # Errors are added to nodes in `ApolloStudioTracing::Tracer#attach_trace_to_result`
     # because we don't have the error `location` here.
-    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def execute_field(data, &block)
-      context = data.fetch(:context, nil) || data.fetch(:query).context
-      return block.call unless tracing_enabled?(context)
+    def execute_field(field, query)
+      context = query.context
+      return yield unless tracing_enabled?(context)
 
       start_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
 
       begin
-        result = block.call
+        result = yield
       rescue StandardError => e
         error = e
       end
 
       end_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
 
-      # legacy runtime
-      if data.include?(:context)
-        path = context.path
-        field_name = context.field.graphql_name
-        field_type = context.field.type.to_s
-        parent_type = context.parent_type.graphql_name
-      else # interpreter runtime
-        path = data.fetch(:path)
-        field = data.fetch(:field)
-        field_name = field.graphql_name
-        field_type = field.type.to_type_signature
-        parent_type = data.fetch(:owner).graphql_name
-      end
+      path = context[:current_path]
+      field_name = field.graphql_name
 
       trace = context.namespace(ApolloStudioTracing::KEY)
       node = trace[:node_map].add(path)
 
       # original_field_name is set only for aliased fields
       node.original_field_name = field_name if field_name != path.last
-      node.type = field_type
-      node.parent_type = parent_type
+      node.type = field.type.to_type_signature
+      node.parent_type = field.owner.graphql_name
       node.start_time = start_time_nanos - trace[:start_time_nanos]
       node.end_time = end_time_nanos - trace[:start_time_nanos]
 
@@ -191,30 +154,22 @@ module ApolloStudioTracing
 
     # Optional Step 3:
     # Overwrite the end times on the trace node if the resolver was lazy.
-    def execute_field_lazy(data, &block)
-      context = data.fetch(:context, nil) || data.fetch(:query).context
-      return block.call unless tracing_enabled?(context)
+    def execute_field_lazy(field, query)
+      context = query.context
+      return yield unless tracing_enabled?(context)
 
       begin
-        result = block.call
+        result = yield
       rescue StandardError => e
         error = e
       end
 
       end_time_nanos = Process.clock_gettime(Process::CLOCK_MONOTONIC, :nanosecond)
 
-      # legacy runtime
-      if data.include?(:context)
-        path = context.path
-        field = context.field
-      else # interpreter runtime
-        path = data.fetch(:path)
-        field = data.fetch(:field)
-      end
-
+      path = context[:current_path]
       trace = context.namespace(ApolloStudioTracing::KEY)
 
-      # When a field is resolved with an array of lazy values, the interpreter fires an
+      # When a field is resolved with an array of lazy values, the runtime fires an
       # `execute_field` for the resolution of the field and then a `execute_field_lazy` event for
       # each lazy value in the array. Since the path here will contain an index (indicating which
       # lazy value we're executing: e.g. ['arrayOfLazies', 0]), we won't have a node for the path.
@@ -231,21 +186,20 @@ module ApolloStudioTracing
 
       result
     end
-    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Step 4:
     # Record end times and merge them into the trace hash
-    def execute_query_lazy(data, &block)
-      result = block.call
+    def execute_query_lazy(query, multiplex)
+      result = yield
 
       # Normalize to an array of queries regardless of whether we are multiplexing or performing a
       # single query.
-      queries = Array(data.fetch(:multiplex)&.queries || data.fetch(:query))
+      queries = Array(multiplex&.queries || query)
 
-      queries.map do |query|
-        next unless tracing_enabled?(query&.context)
+      queries.map do |q|
+        next unless tracing_enabled?(q&.context)
 
-        trace = query.context.namespace(ApolloStudioTracing::KEY)
+        trace = q.context.namespace(ApolloStudioTracing::KEY)
 
         trace.merge!(
           end_time: Time.now.utc,
