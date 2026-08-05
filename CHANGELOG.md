@@ -1,3 +1,27 @@
+# 2.0.0
+
+### BREAKING CHANGES
+
+* Requires graphql-ruby >= 2.1 and Ruby >= 3.1.
+* Tracing is now installed with graphql-ruby's module based trace API
+  (`Schema.trace_with`) instead of the deprecated `Schema.tracer` API, which
+  logged a deprecation warning on every boot with graphql-ruby 2.x and is
+  slated for removal. `use ApolloStudioTracing` is unchanged; it now also
+  accepts `mode:` to install the trace in a non-default trace mode.
+
+### Bug Fixes
+
+* Require `logger`, `socket`, `json` and `concurrent` instead of relying on
+  another gem having loaded them first.
+
+### Dependencies
+
+* google-protobuf >= 3.25, < 5 (protobuf stubs regenerated with protoc 28.3).
+* concurrent-ruby ~> 1.2.
+* Development: rubocop 1.x, rspec 3.13, appraisal 2.5, `debug` in place of
+  `pry-byebug`/`debase`/`ruby-debug-ide`. CI runs on Ruby 3.3 against
+  graphql-ruby 2.1, 2.5 and 2.6.
+
 # [1.1.0](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/compare/v1.0.1...v1.1.0) (2020-12-16)
 
 

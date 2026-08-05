@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'concurrent'
+require 'json'
+
 require_relative 'api'
 require_relative 'proto'
 require_relative 'shutdown_barrier'
@@ -23,11 +26,11 @@ module ApolloStudioTracing
                    max_uncompressed_report_size: nil, max_queue_bytes: nil, debug_reports: nil,
                    max_upload_attempts: nil, min_upload_retry_delay_secs: nil)
       @report_header = report_header
-      @compress = compress.nil? ? true : compress
+      @compress = compress.nil? || compress
       @api_key = api_key || ENV.fetch('ENGINE_API_KEY', ENV.fetch('APOLLO_KEY', 'NO_API_KEY'))
       @reporting_interval = reporting_interval || 5
-      @max_uncompressed_report_size = max_uncompressed_report_size || 4 * 1024 * 1024
-      @max_queue_bytes = max_queue_bytes || @max_uncompressed_report_size * 10
+      @max_uncompressed_report_size = max_uncompressed_report_size || (4 * 1024 * 1024)
+      @max_queue_bytes = max_queue_bytes || (@max_uncompressed_report_size * 10)
       @max_upload_attempts = max_upload_attempts || 5
       @min_upload_retry_delay_secs = min_upload_retry_delay_secs || 0.1
       @debug_reports = debug_reports.nil? ? false : debug_reports

@@ -15,6 +15,7 @@ module ApolloStudioTracing
     ROOT_KEY = ''
 
     attr_reader :nodes
+
     def initialize
       @nodes = {
         ROOT_KEY => ApolloStudioTracing::Node.new,

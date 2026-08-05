@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 module ApolloStudioTracing
   class ApolloLogger < Logger
     def format_message(severity, timestamp, progname, msg)

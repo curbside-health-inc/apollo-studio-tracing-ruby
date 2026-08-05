@@ -1,12 +1,17 @@
 # apollo-studio-tracing
 
-[![CircleCI](https://circleci.com/gh/EnjoyTech/apollo-studio-tracing-ruby/tree/master.svg?style=svg)](https://circleci.com/gh/EnjoyTech/apollo-studio-tracing-ruby/tree/master)
+[![CircleCI](https://circleci.com/gh/curbside-health-inc/apollo-studio-tracing-ruby/tree/master.svg?style=svg)](https://circleci.com/gh/curbside-health-inc/apollo-studio-tracing-ruby/tree/master)
 
 This gem extends the [GraphQL Ruby](http://graphql-ruby.org/) gem to add support for sending trace data to [Apollo Studio](https://www.apollographql.com/docs/studio/). It is intended to be a full-featured replacement for the unmaintained [apollo-tracing-ruby](https://github.com/uniiverse/apollo-tracing-ruby) gem, and it is built HEAVILY from the work done within the Gusto [apollo-federation-ruby](https://github.com/Gusto/apollo-federation-ruby) gem as well an exploratory branch created [here](https://github.com/salsify/apollo-tracing-ruby/tree/feature/new-apollo-api).
 
 ## DISCLAIMER
 
-This gem is still in a beta stage and may have some bugs or incompatibilities. See the [Known Issues and Limitations](#known-issues-and-limitations) below. If you run into any problems, please [file an issue](https://github.com/EnjoyTech/apollo-studio-tracing-ruby/issues).
+This gem is still in a beta stage and may have some bugs or incompatibilities. See the [Known Issues and Limitations](#known-issues-and-limitations) below. If you run into any problems, please [file an issue](https://github.com/curbside-health-inc/apollo-studio-tracing-ruby/issues).
+
+## Requirements
+
+- Ruby >= 3.1
+- graphql-ruby >= 2.1 (tracing is installed via `Schema.trace_with`)
 
 ## Installation
 
@@ -30,7 +35,10 @@ $ gem install apollo-studio-tracing
 
 ## Getting Started
 
-1. Add `use ApolloStudioTracing` to your schema class.
+1. Add `use ApolloStudioTracing` to your schema class. This installs a
+   [module based trace](https://graphql-ruby.org/queries/tracing.html) with
+   `Schema.trace_with`. Pass `mode:` to install it in a non-default trace mode,
+   e.g. `use ApolloStudioTracing, mode: :apollo`.
 2. Change your controller to add `apollo_tracing_enabled: true` to the execution context. Ensure that `apollo_client_name` and `apollo_client_version` are set as well, for proper client information in Studio:
 
    ```ruby
@@ -56,9 +64,7 @@ $ brew install protobuf
 Regenerate the Ruby protos with the included script:
 
 ```
-$ bin/generate-proto.sh
-Removing old client
-Downloading latest Apollo Protobuf IDL
+$ bin/generate-protos.sh
 Generating Ruby client stubs
 ```
 

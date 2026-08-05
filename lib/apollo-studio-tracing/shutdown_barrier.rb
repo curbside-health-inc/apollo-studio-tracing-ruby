@@ -17,7 +17,8 @@ module ApolloStudioTracing
     end
 
     def shutting_down?
-      @latch.count.zero?
+      # `count` is the latch's remaining count, not a collection.
+      @latch.count.zero? # rubocop:disable Style/CollectionQuerying
     end
   end
 end

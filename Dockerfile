@@ -1,4 +1,4 @@
-FROM ruby:2.7-alpine
+FROM ruby:3.3-alpine
 
 RUN apk update && apk add --update --no-cache \
   build-base \
@@ -13,7 +13,7 @@ RUN apk update && apk add --update --no-cache \
   curl
 
 WORKDIR /lib
-RUN gem install bundler:2.1.4 google-protobuf
+RUN gem install bundler
 
 COPY . .
 RUN bundle install
