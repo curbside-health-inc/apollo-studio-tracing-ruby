@@ -2,7 +2,6 @@ version: 2.1
 
 orbs:
   ruby: circleci/ruby@1.1.1
-  node: circleci/node@4.1.0
 
 commands:
   appraisal-install:
@@ -56,18 +55,6 @@ jobs:
       - ruby/rubocop-check:
           format: progress
           label: Inspecting with Rubocop
-  yarn-install:
-
-  release:
-    docker:
-      - image: cimg/ruby:3.3-node
-    steps:
-      - checkout
-      - ruby/install-deps
-      - node/install-packages:
-          pkg-manager: yarn
-      - run: npx semantic-release
-
 workflows:
   version: 2
   main:
@@ -77,7 +64,3 @@ workflows:
           matrix:
             parameters:
               appraisal: ['graphql-2.1', 'graphql-2.5', 'graphql-2.6']
-      - release:
-          requires:
-            - lint
-            - ruby-test
